@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include "Game.h"
+#include "Game.hpp"
 
 namespace coup {
 
@@ -21,10 +21,11 @@ namespace coup {
         // פעולות בסיסיות
         virtual void gather();
         virtual void tax();
-        virtual void bribe();
+        virtual void bribe(Player& target);
         virtual void arrest(Player& target);
         virtual void sanction(Player& target);
         virtual void coup(Player& target);
+        virtual void undo(Player& target);
 
         // פעולות גישה
         std::string name() const;

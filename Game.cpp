@@ -1,5 +1,5 @@
-#include "Game.h"
-#include "Player.h"  // נצטרך את זה בהמשך כשנעבוד עם שמות וכו'
+#include "Game.hpp"
+#include "Player.hpp"  // נצטרך את זה בהמשך כשנעבוד עם שמות וכו'
 
 #include <stdexcept>
 #include <iostream>
@@ -62,5 +62,9 @@ namespace coup {
             turn_index = (turn_index + 1) % players_list.size();
         } while (!players_list[turn_index]->is_active());
     }
+    const std::vector<Player*>& Game::get_all_players() const {
+        return players_list;
+    }
+
 
 }

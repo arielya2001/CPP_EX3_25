@@ -68,24 +68,31 @@ int main() {
     governor.undo(spy); // Governor undo tax
     cout << spy.coins() << endl; // Expected: 1
 
-    baron.invest(); // Baron traded its 3 coins and got 6 
+    baron.tax();
     general.gather();
-    judge.gather(); 
+    judge.gather();
+
+    governor.tax();
+    spy.gather();
+    baron.invest(); // Baron traded its 3 coins and got 6
+    general.gather();
+    judge.gather();
+
+    cout << baron.coins() << endl; // Expected: 6
 
     governor.tax();
     spy.gather();
     baron.gather();
     general.gather();
     judge.gather();
-    
-    cout << baron.coins() << endl; // Expected: 7
 
     governor.tax();
     spy.gather();
+    cout << baron.coins() << endl; // Expected: 7
     baron.coup(governor); // Coup against governor
     general.gather();
     judge.gather();
-    
+
     players = game_1.players();
     // Since no one blocked the Baron, the expected output is:
     // Yossi

@@ -1,4 +1,9 @@
-#include "Player.h"
+#include "Player.hpp"
+#include "Spy.hpp"
+#include "Baron.hpp"
+#include "General.hpp"
+#include "Judge.hpp"
+#include "Merchant.hpp"
 #include <stdexcept>
 #include <iostream>
 
@@ -29,27 +34,50 @@ namespace coup {
         game.next_turn();
     }
 
-    void Player::bribe() {
+    void Player::bribe(Player& target) {
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count < 4) throw runtime_error("Not enough coins for bribe.");
 
         deduct_coins(4);
-        // הפעולה הנוספת תתבצע אחר כך מבחינת המשתמש
-        // כאן רק "מאשרים" את הזכות לפעולה נוספת
+
+        // אם היעד הוא Merchant – הוא מקבל מטבע
+        Merchant* merchant = dynamic_cast<Merchant*>(&target);
+        if (merchant != nullptr && merchant->is_active()) {
+            merchant->on_bribed_by(*this);
+        }
+
+        // המשתמש יכול לבצע פעולה נוספת בהמשך (כמו arrest)
     }
 
     void Player::arrest(Player& target) {
-        if (!active) throw runtime_error("Inactive player cannot play.");
-        if (game.turn() != name()) throw runtime_error("Not your turn.");
-        if (!target.is_active()) throw runtime_error("Target player is not active.");
-        if (target.was_arrested_recently()) throw runtime_error("Cannot arrest the same player twice in a row.");
-
+        if (!active) {
+            throw runtime_error("Inactive player cannot play.");}
+        if (game.turn() != name()) {
+            throw runtime_error("Not your turn.");}
+        if (!target.is_active()) {
+            throw runtime_error("Target player is not active.");}
+        if (target.was_arrested_recently()) {
+            throw runtime_error("Cannot arrest the same player twice in a row.");}
+        // בדיקה אם יש Spy שחוסם את ה-arrest
+        for (Player* p : game.get_all_players()) {
+            Spy* spy = dynamic_cast<Spy*>(p);
+            if (spy && spy->is_active() && spy->is_arrest_blocked(&target)) {
+                throw runtime_error("Arrest blocked by Spy.");}}
+        // אם target הוא General – החזר לו את המטבע
+        General* general = dynamic_cast<General*>(&target);
+        if (general != nullptr) {
+            general->refund_arrest_coin();
+        } else {
+            target.deduct_coins(1);
+        }
+        // עדכון מצב
         target.set_arrested_recently(true);
         add_coins(1);
-        target.deduct_coins(1);
         game.next_turn();
     }
+
+
 
     void Player::sanction(Player& target) {
         if (!active) throw runtime_error("Inactive player cannot play.");
@@ -58,7 +86,15 @@ namespace coup {
         if (!target.is_active()) throw runtime_error("Target player is not active.");
 
         deduct_coins(3);
-        // הפעולה עצמה של "לחסום" תהיה דרך השחקן שהותקף (בתפקידים כמו Baron)
+        Judge* judge = dynamic_cast<Judge*>(&target);
+        if (judge != nullptr) {
+            judge->on_sanctioned(*this);  // 'this' הוא התוקף
+        }
+        // ✅ אם השחקן המותקף הוא Baron – נפצה אותו
+        Baron* baron = dynamic_cast<Baron*>(&target);
+        if (baron != nullptr) {
+            baron->receive_sanction_penalty();
+        }
         game.next_turn();
     }
 
@@ -109,5 +145,10 @@ namespace coup {
     void Player::set_arrested_recently(bool val) {
         was_arrested_last = val;
     }
+    void Player::undo(Player& target) {
+        (void)target;  // מדכא warning על unused parameter
+        throw std::runtime_error("This role cannot perform undo.");
+    }
+
 
 }

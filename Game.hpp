@@ -19,6 +19,7 @@ namespace coup {
         std::vector<std::string> players() const;
         std::string winner() const;
         void next_turn();
+        const std::vector<Player*>& get_all_players() const;
 
         // ייתכן שתוסיף מתודות נוספות כמו remove_player, get_index וכו'
     };
