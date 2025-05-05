@@ -16,6 +16,10 @@ namespace coup {
 
     public:
         Player(Game& game, const std::string& name, const std::string& role);
+        const Game& getGame() const {
+            return game;
+        }
+
         virtual ~Player() = default;
 
         // פעולות בסיסיות

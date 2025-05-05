@@ -1,14 +1,15 @@
 #include <SFML/Graphics.hpp>
 #include "ActionLog.hpp"
 #include "GameRenderer.hpp"
-using namespace coup;
+#include "../Game.hpp"
+#include "../Player.hpp"
+#include "../Governor.hpp"
+#include "../Spy.hpp"
+#include "../Baron.hpp"
+#include "../General.hpp"
+#include "../Judge.hpp"
 
-struct PlayerInfo {
-    std::string name;
-    std::string role;
-    int coins;
-    bool alive;
-};
+using namespace coup;
 
 int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "Coup Game - GUI");
@@ -21,17 +22,18 @@ int main() {
     title.setPosition(280, 20);
     title.setFillColor(sf::Color::White);
 
-    std::vector<PlayerInfo> players = {
-        {"Moshe",  "Governor", 2, false},
-        {"Yossi",  "Spy",      1, true},
-        {"Meirav", "Baron",    7, true},
-        {"Reut",   "General",  4, true},
-        {"Gilad",  "Judge",    4, true},
-    };
+    Game game;
+    Governor moshe(game, "Moshe");
+    Spy yossi(game, "Yossi");
+    Baron meirav(game, "Meirav");
+    General reut(game, "Reut");
+    Judge gilad(game, "Gilad");
 
-    GameRenderer renderer(font);
-    renderer.setTurn("Meirav (Baron)");
+    std::vector<Player*> players = { &moshe, &yossi, &meirav, &reut, &gilad };
+
+    GameRenderer renderer(font,game);
     renderer.setPlayers(players);
+    renderer.setTurn("Meirav (Baron)");
 
     while (window.isOpen()) {
         sf::Event event;
@@ -46,7 +48,7 @@ int main() {
 
         window.clear(sf::Color(30, 30, 30));
         window.draw(title);
-        renderer.draw(window); // כולל גם את הכפתורים
+        renderer.draw(window);
         window.display();
     }
 
