@@ -63,6 +63,7 @@ namespace coup {
             return last_action;
         }
         virtual void on_turn_start() {}
+        void clear_last_action();
 
     };
 

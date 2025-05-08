@@ -15,6 +15,7 @@ namespace coup {
 
         // מחזירים לו את 4 המטבעות ששילם על bribe
         target.add_coins(4);
+        target.clear_last_action();
     }
 
     void Judge::on_sanctioned(Player& attacker) {

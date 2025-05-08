@@ -55,7 +55,7 @@ namespace coup {
         }
 
         // ✅ השחקן מקבל שני תורות בונוס
-        bonus_turns += 2;
+        bonus_turns += 1;
         last_action = "bribe";
 
     }
@@ -181,6 +181,10 @@ namespace coup {
     void Player::set_active(bool val) {
         active = val;
     }
+    void Player::clear_last_action() {
+        last_action = "";
+    }
+
 
 
 

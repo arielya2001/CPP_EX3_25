@@ -36,6 +36,8 @@ namespace coup {
         }
 
         target.deduct_coins(2);
+        target.clear_last_action();
+
     }
 
 }

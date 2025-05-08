@@ -17,6 +17,7 @@ namespace coup {
 
         // מחזירים את המטרה לחיים (אם בוצעה עליו הפיכה)
         target.set_active(true);
+        target.clear_last_action();
     }
 
     void General::refund_arrest_coin() {
