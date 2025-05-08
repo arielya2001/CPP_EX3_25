@@ -13,5 +13,12 @@ namespace coup {
 
         add_coins(1);  // הרווח שלו מהשוחד
     }
+    // בתוך Merchant.cpp
+    void Merchant::on_turn_start() {
+        if (!is_active()) return;
+        if (coins() >= 3) {
+            add_coins(1);
+        }
+    }
 
 }

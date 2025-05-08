@@ -13,6 +13,10 @@ namespace coup {
         int coin_count;
         bool active;
         bool was_arrested_last; // למניעת arrest כפול
+        int bonus_turns = 0;  // NEW
+        std::string last_action;
+        bool gather_blocked = false;
+        bool is_sanctioned = false;
 
     public:
         Player(Game& game, const std::string& name, const std::string& role);
@@ -41,10 +45,25 @@ namespace coup {
         void add_coins(int amount);
         void deduct_coins(int amount);
         void deactivate(); // אם הודח
+        void set_active(bool val);  // מאפשר להחזיר שחקן למשחק
 
         // יכולת לדעת אם מישהו עשה עליו arrest לאחרונה
         bool was_arrested_recently() const;
         void set_arrested_recently(bool val);
+        void set_gather_blocked(bool val) { gather_blocked = val; }
+        bool is_gather_blocked() const { return gather_blocked; }
+        bool is_under_sanction() const { return is_sanctioned; }
+        void set_sanctioned(bool val) { is_sanctioned = val; }
+
+
+        bool has_bonus_turn() const;
+        void use_bonus_turn();
+        void give_bonus_turns(int turns);
+        const std::string& get_last_action() const {
+            return last_action;
+        }
+        virtual void on_turn_start() {}
+
     };
 
 }

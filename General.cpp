@@ -15,11 +15,8 @@ namespace coup {
 
         deduct_coins(5);
 
-        // החסימה נעשתה, אבל לפי המטלה — שחקן שעשה את ה־coup עדיין איבד את הכסף
-        // לכן אנחנו רק "מונעים" את ההדחה בפועל
-
-        // מחזירים את המטרה לחיים אם הייתה מודחת (אפשר להשתמש ב-set_active בעתיד אם תוסיף)
-        target.add_coins(0); // placeholder – אולי נוסיף setActive(true) בהמשך
+        // מחזירים את המטרה לחיים (אם בוצעה עליו הפיכה)
+        target.set_active(true);
     }
 
     void General::refund_arrest_coin() {

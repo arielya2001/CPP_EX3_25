@@ -20,8 +20,13 @@ namespace coup {
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count >= 10) throw runtime_error("Must perform coup with 10 coins.");
-
+        if (gather_blocked) {
+            gather_blocked = false; // נחסם רק לפעם אחת
+            throw runtime_error("You are blocked from gathering due to sanction.");
+        }
+        if (is_under_sanction()) throw runtime_error("You are under sanction and cannot gather.");
         add_coins(1);
+        last_action = "gather";
         game.next_turn();
     }
 
@@ -29,8 +34,10 @@ namespace coup {
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count >= 10) throw runtime_error("Must perform coup with 10 coins.");
+        if (is_under_sanction()) throw runtime_error("You are under sanction and cannot gather.");
 
         add_coins(2);
+        last_action = "tax";
         game.next_turn();
     }
 
@@ -47,8 +54,12 @@ namespace coup {
             merchant->on_bribed_by(*this);
         }
 
-        // המשתמש יכול לבצע פעולה נוספת בהמשך (כמו arrest)
+        // ✅ השחקן מקבל שני תורות בונוס
+        bonus_turns += 2;
+        last_action = "bribe";
+
     }
+
 
     void Player::arrest(Player& target) {
         if (!active) {
@@ -74,6 +85,7 @@ namespace coup {
         // עדכון מצב
         target.set_arrested_recently(true);
         add_coins(1);
+        last_action = "arrest";
         game.next_turn();
     }
 
@@ -86,6 +98,7 @@ namespace coup {
         if (!target.is_active()) throw runtime_error("Target player is not active.");
 
         deduct_coins(3);
+        target.set_sanctioned(true);
         Judge* judge = dynamic_cast<Judge*>(&target);
         if (judge != nullptr) {
             judge->on_sanctioned(*this);  // 'this' הוא התוקף
@@ -95,6 +108,8 @@ namespace coup {
         if (baron != nullptr) {
             baron->receive_sanction_penalty();
         }
+        target.set_gather_blocked(true);
+        last_action = "sanction";
         game.next_turn();
     }
 
@@ -106,6 +121,7 @@ namespace coup {
 
         deduct_coins(7);
         target.deactivate();
+        last_action = "coup";
         game.next_turn();
     }
 
@@ -149,6 +165,25 @@ namespace coup {
         (void)target;  // מדכא warning על unused parameter
         throw std::runtime_error("This role cannot perform undo.");
     }
+    bool Player::has_bonus_turn() const {
+        return bonus_turns > 0;
+    }
+
+    void Player::use_bonus_turn() {
+        if (bonus_turns > 0) {
+            --bonus_turns;
+        }
+    }
+
+    void Player::give_bonus_turns(int turns) {
+        bonus_turns += turns;
+    }
+    void Player::set_active(bool val) {
+        active = val;
+    }
+
+
+
 
 
 }

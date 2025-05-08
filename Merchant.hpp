@@ -10,6 +10,8 @@ namespace coup {
 
         // יקרא כאשר מישהו עושה עליו bribe
         void on_bribed_by(Player& source);
+        void on_turn_start() override;
+
     };
 
 }

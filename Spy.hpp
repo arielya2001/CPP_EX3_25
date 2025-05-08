@@ -2,12 +2,14 @@
 
 #include "Player.hpp"
 #include <set>
+#include <unordered_map>
 
 namespace coup {
 
     class Spy : public Player {
     private:
-        std::set<Player*> blocked_arrests;
+        std::unordered_map<Player*, int> blocked_arrests;
+
 
     public:
         Spy(Game& game, const std::string& name);
@@ -20,6 +22,8 @@ namespace coup {
 
         // פונקציה לבדיקה אם שחקן חסום (נשתמש מחוץ למחלקה הזו)
         bool is_arrest_blocked(Player* p) const;
+        void clear_expired_blocks();
+
     };
 
 }

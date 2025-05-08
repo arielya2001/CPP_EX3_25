@@ -1,6 +1,6 @@
 #include "Game.hpp"
-#include "Player.hpp"  // נצטרך את זה בהמשך כשנעבוד עם שמות וכו'
-
+#include "Player.hpp"
+#include "Spy.hpp"
 #include <stdexcept>
 #include <iostream>
 using namespace std;
@@ -28,7 +28,7 @@ namespace coup {
             idx = (idx + 1) % players_list.size();
             tries++;
         }
-
+        players_list[idx]->on_turn_start();
         return players_list[idx]->name();
     }
 
@@ -58,13 +58,47 @@ namespace coup {
     }
 
     void Game::next_turn() {
+        // אם יש לשחקן תור בונוס – משתמש בו ונשאר בתורו
+        if (players_list[turn_index]->has_bonus_turn()) {
+            players_list[turn_index]->use_bonus_turn();
+            return;
+        }
+        for (Player* p : players_list) {
+            p->set_arrested_recently(false);
+            p->set_sanctioned(false);
+        }
+        // מעבר לשחקן הבא החי
         do {
             turn_index = (turn_index + 1) % players_list.size();
         } while (!players_list[turn_index]->is_active());
+
+        for (Player* p : players_list) {
+            Spy* spy = dynamic_cast<Spy*>(p);
+            if (spy && spy->is_active()) {
+                spy->clear_expired_blocks();
+            }
+        }
+
     }
     const std::vector<Player*>& Game::get_all_players() const {
         return players_list;
     }
+    int Game::get_player_index(Player* p) const {
+        for (size_t i = 0; i < players_list.size(); ++i) {
+            if (players_list[i] == p) return i;
+        }
+        return -1;
+    }
+
+    int Game::get_turn_index() const {
+        return turn_index;
+    }
+    int Game::num_players() const {
+        return static_cast<int>(players_list.size());
+    }
+
+
+
 
 
 }

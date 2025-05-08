@@ -21,6 +21,10 @@ namespace coup {
     void Governor::undo(Player& target) {
         if (!is_active()) throw runtime_error("Governor is not active.");
         if (!target.is_active()) throw runtime_error("Target is not active.");
+        if (target.get_last_action() != "tax") {
+            throw runtime_error("Cannot undo: last action was not tax.");
+        }
+
 
         // בינתיים נניח ש־Spy הוא היחיד שעושה tax רגיל (2 מטבעות)
         if (target.role() != "Spy") {

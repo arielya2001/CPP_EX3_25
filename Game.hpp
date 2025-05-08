@@ -20,7 +20,9 @@ namespace coup {
         std::string winner() const;
         void next_turn();
         const std::vector<Player*>& get_all_players() const;
+        int get_player_index(Player* p) const;
+        int get_turn_index() const;
+        int num_players() const;
 
-        // ייתכן שתוסיף מתודות נוספות כמו remove_player, get_index וכו'
     };
 }
