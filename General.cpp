@@ -12,11 +12,15 @@ namespace coup {
         if (!is_active()) throw runtime_error("General is not active.");
         if (!target.is_active()) throw runtime_error("Target is not active.");
         if (coins() < 5) throw runtime_error("Not enough coins to block coup.");
+        if (!target.was_couped()) {
+            throw runtime_error("Target was not couped.");
+        }
 
         deduct_coins(5);
 
         // מחזירים את המטרה לחיים (אם בוצעה עליו הפיכה)
         target.set_active(true);
+        target.set_couped(false);
         target.clear_last_action();
     }
 

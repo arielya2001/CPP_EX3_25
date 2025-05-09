@@ -120,6 +120,7 @@ namespace coup {
         if (coin_count < 7) throw runtime_error("Not enough coins to perform coup.");
 
         deduct_coins(7);
+        target.set_couped(true);
         target.deactivate();
         last_action = "coup";
         game.next_turn();

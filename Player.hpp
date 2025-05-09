@@ -17,6 +17,7 @@ namespace coup {
         std::string last_action;
         bool gather_blocked = false;
         bool is_sanctioned = false;
+        bool couped_flag = false;
 
     public:
         Player(Game& game, const std::string& name, const std::string& role);
@@ -54,6 +55,9 @@ namespace coup {
         bool is_gather_blocked() const { return gather_blocked; }
         bool is_under_sanction() const { return is_sanctioned; }
         void set_sanctioned(bool val) { is_sanctioned = val; }
+        bool was_couped() const { return couped_flag; }
+        void set_couped(bool val) { couped_flag = val; }
+
 
 
         bool has_bonus_turn() const;
