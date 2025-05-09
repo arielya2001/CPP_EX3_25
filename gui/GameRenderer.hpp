@@ -9,6 +9,10 @@
 #include "../Game.hpp"
 #include "../Judge.hpp"
 #include "../Governor.hpp"
+#include "../Spy.hpp"
+#include "../Baron.hpp"
+#include "../General.hpp"
+
 
 namespace coup {
 

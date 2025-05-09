@@ -28,7 +28,6 @@ namespace coup {
             idx = (idx + 1) % players_list.size();
             tries++;
         }
-        players_list[idx]->on_turn_start();
         return players_list[idx]->name();
     }
 
@@ -58,6 +57,16 @@ namespace coup {
     }
 
     void Game::next_turn() {
+        if (players_list[turn_index]->has_bonus_turn()) {
+            players_list[turn_index]->use_bonus_turn();
+            total_turns++;
+            std::cout << "[Debug] Bonus turn used. Total turns: " << total_turns << std::endl;
+            return;
+        }
+
+        total_turns++;
+        std::cout << "[Debug] Regular turn. Total turns: " << total_turns << std::endl;
+
         if (awaiting_bribe_block) {
             awaiting_bribe_block = false;
             if (bribing_player && bribing_player->is_active()) {
@@ -66,31 +75,16 @@ namespace coup {
                 return;
             }
         }
-        // אם יש לשחקן תור בונוס – משתמש בו ונשאר בתורו
-        if (players_list[turn_index]->has_bonus_turn()) {
-            players_list[turn_index]->use_bonus_turn();
-            return;
-        }
 
-        for (Player* p : players_list) {
-            p->set_arrested_recently(false);
-            p->set_sanctioned(false);
-        }
-
-        // מעבר לשחקן הבא החי
         do {
             turn_index = (turn_index + 1) % players_list.size();
         } while (!players_list[turn_index]->is_active());
-
-        // ניקוי חסימות של Spy
-        for (Player* p : players_list) {
-            Spy* spy = dynamic_cast<Spy*>(p);
-            if (spy && spy->is_active()) {
-                spy->clear_expired_blocks();
-            }
-        }
-
+        players_list[turn_index]->on_turn_start();  // ← הוסף את זה כאן
+        std::cout << "[Debug] Next turn: " << players_list[turn_index]->name() << std::endl;
     }
+
+
+
     const std::vector<Player*>& Game::get_all_players() const {
         return players_list;
     }
@@ -116,6 +110,20 @@ namespace coup {
         }
         throw std::runtime_error("Player not found in game.");
     }
+    void Game::clear_coup_target() {
+        if (awaiting_coup_block && coup_attacker) {
+            size_t attacker_index = get_player_index(coup_attacker);
+            if (attacker_index == turn_index) {
+                turn_index = (turn_index + 1) % players_list.size();
+            }
+        }
+
+        coup_target = nullptr;
+        coup_attacker = nullptr;
+        awaiting_coup_block = false;
+    }
+
+
 
 
 

@@ -67,7 +67,7 @@ namespace coup {
         const std::string& get_last_action() const {
             return last_action;
         }
-        virtual void on_turn_start() {}
+        virtual void on_turn_start();
         void clear_last_action();
 
     };

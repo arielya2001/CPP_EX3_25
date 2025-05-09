@@ -1,6 +1,7 @@
 #include "Spy.hpp"
 #include "Game.hpp"
 #include <stdexcept>
+#include <iostream>
 
 using namespace std;
 
@@ -18,24 +19,28 @@ namespace coup {
     void Spy::block_arrest(Player& target) {
         if (!is_active() || !target.is_active()) return;
 
-        // חסום את השחקן עד שיסיים את התור הבא שלו
-        int target_index = game.get_player_index(&target);
-        int unblock_index = (target_index + 1) % game.num_players();
-        blocked_arrests[&target] = unblock_index;
+        // שמירת מספר הסיבוב בעת החסימה
+        int blocked_at_turn = game.get_total_turns();
+        blocked_arrests[&target] = blocked_at_turn;
     }
 
     bool Spy::is_arrest_blocked(Player* p) const {
         auto it = blocked_arrests.find(p);
         if (it == blocked_arrests.end()) return false;
 
-        int unblock_index = it->second;
-        return game.get_turn_index() != unblock_index; // נחסם עד *אחרי* ה־index
+        int blocked_at = it->second;
+        int turns_since_block = game.get_total_turns() - blocked_at;
+
+        // חסימה נמשכת עד שחלף סיבוב מלא של כל השחקנים
+        return turns_since_block < game.num_players();
     }
 
     void Spy::clear_expired_blocks() {
+        int current_turn = game.get_total_turns();
         for (auto it = blocked_arrests.begin(); it != blocked_arrests.end(); ) {
-            if (game.get_turn_index() == it->second) {
-                it = blocked_arrests.erase(it);  // שחקן הגיע לתור שאחריו הוא חופשי
+            int blocked_at = it->second;
+            if (current_turn - blocked_at >= game.num_players()) {
+                it = blocked_arrests.erase(it);
             } else {
                 ++it;
             }

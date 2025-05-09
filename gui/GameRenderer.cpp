@@ -11,7 +11,7 @@ namespace coup {
         turnText.setPosition(250, 80);
 
         // Gather button
-        buttons.emplace_back(font, "Gather", sf::Vector2f(100, 450), sf::Vector2f(100, 35), [this]() {
+        buttons.emplace_back(font, "Gather", sf::Vector2f(100, 360), sf::Vector2f(100, 35), [this]() {
             std::cout << "Gather clicked\n";
             if (auto* p = getCurrentPlayer(); p && p->is_active()) {
                 p->gather();
@@ -22,7 +22,7 @@ namespace coup {
         });
 
         // Tax button
-        buttons.emplace_back(font, "Tax", sf::Vector2f(220, 450), sf::Vector2f(100, 35), [this]() {
+        buttons.emplace_back(font, "Tax", sf::Vector2f(220, 360), sf::Vector2f(100, 35), [this]() {
             std::cout << "Tax clicked\n";
             if (auto* p = getCurrentPlayer(); p && p->is_active()) {
                 p->tax();
@@ -34,7 +34,7 @@ namespace coup {
         });
 
         // Coup button
-        buttons.emplace_back(font, "Coup", sf::Vector2f(340, 450), sf::Vector2f(100, 35), [this, &font]() {
+        buttons.emplace_back(font, "Coup", sf::Vector2f(340, 360), sf::Vector2f(100, 35), [this, &font]() {
             std::cout << "Coup clicked\n";
             selectingCoupTarget = true;
             targetButtons.clear();
@@ -66,7 +66,7 @@ namespace coup {
             }
         });
         // Bribe button
-        buttons.emplace_back(font, "Bribe", sf::Vector2f(460, 450), sf::Vector2f(100, 35), [this, &game]() {
+        buttons.emplace_back(font, "Bribe", sf::Vector2f(460, 360), sf::Vector2f(100, 35), [this, &game]() {
             std::cout << "Bribe clicked\n";
             Player* current = getCurrentPlayer();
             if (!current || !current->is_active()) return;
@@ -82,7 +82,7 @@ namespace coup {
             }
         });
         // בתוך GameRenderer::GameRenderer
-        buttons.emplace_back(font, "Arrest", sf::Vector2f(580, 450), sf::Vector2f(100, 35), [this, &font]() {
+        buttons.emplace_back(font, "Arrest", sf::Vector2f(580, 360), sf::Vector2f(100, 35), [this, &font]() {
             std::cout << "Arrest clicked\n";
             selectingCoupTarget = true;
             targetButtons.clear();
@@ -114,7 +114,7 @@ namespace coup {
             }
         });
         // Sanction button
-        buttons.emplace_back(font, "Sanction", sf::Vector2f(100, 490), sf::Vector2f(100, 35), [this, &font]() {
+        buttons.emplace_back(font, "Sanction", sf::Vector2f(100, 420), sf::Vector2f(100, 35), [this, &font]() {
             std::cout << "Sanction clicked\n";
             selectingCoupTarget = true;
             targetButtons.clear();
@@ -185,41 +185,8 @@ namespace coup {
         });
         buttons.back().setVisible(false);  // מוסתר כברירת מחדל
         buttons.back().setEnabled(false);
-
-        buttons.emplace_back(font, "Coup", sf::Vector2f(340, 450), sf::Vector2f(100, 35), [this, &font]() {
-    std::cout << "Coup clicked\n";
-    selectingCoupTarget = true;
-    targetButtons.clear();
-
-    Player* attacker = getCurrentPlayer();
-    if (!attacker || !attacker->is_active()) return;
-
-    float x = 100.f;
-    float y = 550.f;
-    for (auto* target : players) {
-        if (target->is_active() && target != attacker) {
-            std::string targetName = target->name();
-            targetButtons.emplace_back(font, targetName, sf::Vector2f(x, 500), sf::Vector2f(100, 30),
-                [this, attacker, target]() {
-                    try {
-                        attacker->coup(*target);
-                        std::cout << attacker->name() << " performed coup on " << target->name() << std::endl;
-                        selectingCoupTarget = false;
-                        updateTextEntries();
-                        setTurn(this->game.turn());
-                        updateButtonStates();
-                    } catch (const std::exception& e) {
-                        std::cerr << "Coup error: " << e.what() << std::endl;
-                        selectingCoupTarget = false;
-                    }
-                }
-            );
-            x += 120;
-        }
-    }
-});
         // כפתור חסימת Tax ע"י נציב
-            buttons.emplace_back(font, "Block Tax", sf::Vector2f(480, 490), sf::Vector2f(120, 35), [this, &game, &font]() {
+            buttons.emplace_back(font, "Block Tax", sf::Vector2f(480, 420), sf::Vector2f(120, 35), [this, &game, &font]() {
             std::cout << "Block Tax clicked\n";
             selectingCoupTarget = true;
             targetButtons.clear();
@@ -265,6 +232,169 @@ namespace coup {
         buttons.back().setVisible(false);
         buttons.back().setEnabled(false);
 
+// כפתור Reveal Coins – מציג כמה מטבעות יש לשחקן אחר
+buttons.emplace_back(font, "Reveal Coins", sf::Vector2f(100, 500), sf::Vector2f(120, 35), [this, &font]() {
+    std::cout << "Reveal Coins clicked\n";
+    selectingCoupTarget = true;
+    targetButtons.clear();
+
+    Player* spy = getCurrentPlayer();
+    if (!spy || spy->role() != "Spy" || !spy->is_active()) return;
+
+    float x = 100.f;
+    float y = 540.f;
+
+    for (Player* target : players) {
+        if (target->is_active() && target != spy) {
+            std::string label = target->name();
+            targetButtons.emplace_back(font, label, sf::Vector2f(x, y), sf::Vector2f(100, 30),
+                [this, &font, spy, target]() {
+                    try {
+                        Spy* realSpy = dynamic_cast<Spy*>(spy);
+                        if (!realSpy) throw std::runtime_error("Invalid spy cast.");
+                        int coins = realSpy->spy_on(*target);
+
+                        std::cout << "🕵️ " << target->name() << " has " << coins << " coins.\n";
+
+                        selectingCoupTarget = false;
+                    } catch (const std::exception& e) {
+                        std::cerr << "RevealCoins error: " << e.what() << std::endl;
+                        selectingCoupTarget = false;
+                    }
+                }
+            );
+            x += 120;
+        }
+    }
+
+    if (targetButtons.empty()) {
+        selectingCoupTarget = false;
+    }
+});
+buttons.back().setVisible(false);
+buttons.back().setEnabled(false);
+
+// כפתור Block Arrest – חוסם arrest משחקן אחר בתורו הבא
+buttons.emplace_back(font, "Block Arrest", sf::Vector2f(240, 500), sf::Vector2f(120, 35), [this, &font]() {
+    std::cout << "Block Arrest clicked\n";
+    selectingCoupTarget = true;
+    targetButtons.clear();
+
+    Player* spy = getCurrentPlayer();
+    if (!spy || spy->role() != "Spy" || !spy->is_active()) return;
+
+    float x = 100.f;
+    float y = 570.f;
+
+    for (Player* target : players) {
+        if (target->is_active() && target != spy) {
+            std::string label = target->name();
+            targetButtons.emplace_back(font, label, sf::Vector2f(x, y), sf::Vector2f(100, 30),
+                [this, &font, spy, target]() {
+                    try {
+                        Spy* realSpy = dynamic_cast<Spy*>(spy);
+                        if (!realSpy) throw std::runtime_error("Invalid spy cast.");
+
+                        realSpy->block_arrest(*target);
+
+                        std::cout << "🛑 " << target->name() << " is blocked from arresting in next turn.\n";
+
+                        selectingCoupTarget = false;
+                    } catch (const std::exception& e) {
+                        std::cerr << "BlockArrest error: " << e.what() << std::endl;
+                        selectingCoupTarget = false;
+                    }
+                }
+            );
+            x += 120;
+        }
+    }
+
+    if (targetButtons.empty()) {
+        selectingCoupTarget = false;
+    }
+});
+        buttons.back().setVisible(false);
+        buttons.back().setEnabled(false);
+
+        // Baron - Invest button (3 coins → 6 coins)
+        buttons.emplace_back(font, "Invest", sf::Vector2f(700, 360), sf::Vector2f(100, 35), [this, &game]() {
+            std::cout << "Invest clicked\n";
+            Player* current = getCurrentPlayer();
+            if (!current || current->role() != "Baron" || !current->is_active()) return;
+
+            try {
+                Baron* baron = dynamic_cast<Baron*>(current);
+                if (!baron) throw std::runtime_error("Invalid baron cast.");
+                baron->invest();
+                std::cout << baron->name() << " invested: paid 3 coins, received 6.\n";
+
+                updateTextEntries();
+                setTurn(game.turn());
+                updateButtonStates();
+            } catch (const std::exception& e) {
+                std::cerr << "Invest error: " << e.what() << std::endl;
+            }
+        });
+        buttons.back().setVisible(false);
+        buttons.back().setEnabled(false);
+
+        // General - Protect from Coup
+        // כפתור Protect from Coup – זז שמאלה ויותר למטה
+        buttons.emplace_back(font, "Protect from Coup", sf::Vector2f(680, 460), sf::Vector2f(160, 35), [this, &game, &font]() {
+                    std::cout << "Protect from Coup clicked\n";
+            selectingCoupTarget = true;
+            targetButtons.clear();
+
+            Player* general = getCurrentPlayer();
+            if (!general || general->role() != "General" || !general->is_active()) return;
+
+            float x = 100.f;
+            float y = 570.f;
+
+            for (Player* target : players) {
+                if (target->is_active()) {
+                    std::string label = target->name();
+                    targetButtons.emplace_back(font, label, sf::Vector2f(x, y), sf::Vector2f(100, 30),
+                        [this, general, target, &game, &font]() {
+                            try {
+                                General* realGen = dynamic_cast<General*>(general);
+                                if (!realGen) throw std::runtime_error("Invalid general cast.");
+                                if (realGen->coins() < 5) throw std::runtime_error("Not enough coins to protect.");
+
+                                realGen->deduct_coins(5);
+                                realGen->protected_players.insert(target);
+                                std::cout << general->name() << " is now protecting " << target->name() << " from coup.\n";
+
+                                updateTextEntries();
+                                game.next_turn();
+                                setTurn(game.turn());
+                                updateButtonStates();
+                            } catch (const std::exception& e) {
+                                std::cerr << "ProtectCoup error: " << e.what() << std::endl;
+                            }
+                            selectingCoupTarget = false;
+                        }
+                    );
+                    x += 120;
+                }
+            }
+
+            if (targetButtons.empty()) {
+                selectingCoupTarget = false;
+            }
+        });
+        buttons.back().setVisible(false);
+        buttons.back().setEnabled(false);
+
+
+
+
+
+
+
+
+
 
 
 
@@ -304,6 +434,10 @@ namespace coup {
 
     void GameRenderer::setTurn(const std::string& name) {
         turnText.setString("Current Turn: " + name);
+        Player* current = getCurrentPlayer();
+        if (current) {
+            current->on_turn_start(); // קריאה כאן
+        }
         updateButtonStates();
     }
 
@@ -340,50 +474,91 @@ namespace coup {
             }
         }
     }
-    void GameRenderer::updateButtonStates() {
-        Player* current = getCurrentPlayer();
-        if (!current) return;
+void GameRenderer::updateButtonStates() {
+    Player* current = getCurrentPlayer();
+    if (!current) return;
 
-        for (auto& btn : buttons) {
-            const std::string& label = btn.getLabel();
+    for (auto& btn : buttons) {
+        const std::string& label = btn.getLabel();
 
-            // מצב מיוחד: שופט בתור חסימת שוחד
-            if (game.is_awaiting_bribe_block()) {
-                if (current->role() == "Judge") {
-                    // מציג רק את בלוק ודילוג
-                    bool show = (label == "Block Bribe" || label == "Skip");
-                    btn.setVisible(show);
-                    btn.setEnabled(show);
-                } else {
-                    btn.setVisible(false);  // שאר השחקנים לא רואים כפתורים
-                }
-                continue;  // <<< חשוב מאוד!
+        // מצב מיוחד: שופט בתור חסימת שוחד
+        if (game.is_awaiting_bribe_block()) {
+            if (current->role() == "Judge") {
+                bool show = (label == "Block Bribe" || label == "Skip");
+                btn.setVisible(show);
+                btn.setEnabled(show);
+            } else {
+                btn.setVisible(false);  // שאר השחקנים לא רואים כפתורים
             }
-            // מצב רגיל
-            if (label == "Block Bribe" || label == "Skip") {
-                btn.setVisible(false);
-            }
-            else if (label == "Block Tax") {
-                bool isGovernor = current->role() == "Governor";
-                btn.setVisible(isGovernor);
-                btn.setEnabled(isGovernor);
-            }
-            else {
-                btn.setVisible(true);
+            continue;
+        }
 
-                if (label == "Gather") {
-                    btn.setEnabled(!current->is_gather_blocked() && !current->is_under_sanction());
-                } else if (label == "Tax") {
-                    btn.setEnabled(!current->is_under_sanction());
-                } else if (label == "Coup") {
-                    btn.setEnabled(current->coins() >= 7);
-                } else {
-                    btn.setEnabled(true);
-                }
+        // מצב מיוחד: גנרל בתור חסימת coup
+        if (game.is_awaiting_coup_block()) {
+            if (current->role() == "General") {
+                bool show = (label == "Block Coup" || label == "Skip Coup Block");
+                btn.setVisible(show);
+                btn.setEnabled(show);
+            } else {
+                btn.setVisible(false);  // שאר השחקנים לא רואים כפתורים
             }
+            continue;
+        }
 
+        // כפתורים שמוסתרים תמיד חוץ מבמצבים מיוחדים
+        if (label == "Block Bribe" || label == "Skip" || label == "Block Coup" || label == "Skip Coup Block") {
+            btn.setVisible(false);
+            continue;
+        }
+
+        // --- כפתורים ייחודיים לפי תפקיד ---
+
+        if (label == "Block Tax") {
+            bool isGovernor = current->role() == "Governor";
+            btn.setVisible(isGovernor);
+            btn.setEnabled(isGovernor);
+            continue;
+        }
+        if (label == "Protect from Coup") {
+            bool isGeneral = current->role() == "General" && current->coins() >= 5;
+            btn.setVisible(isGeneral);
+            btn.setEnabled(isGeneral);
+            continue;
+        }
+
+
+        if (label == "Reveal Coins" || label == "Block Arrest") {
+            bool isSpy = current->role() == "Spy";
+            btn.setVisible(isSpy);
+            btn.setEnabled(isSpy);
+            continue;
+        }
+
+        if (label == "Invest") {
+            bool isBaron = current->role() == "Baron" && current->coins() >= 3;
+            btn.setVisible(isBaron);
+            btn.setEnabled(isBaron);
+            continue;
+        }
+
+        // --- כל שאר הכפתורים הרגילים ---
+        btn.setVisible(true);
+
+        if (label == "Gather") {
+            btn.setEnabled(!current->is_gather_blocked() && !current->is_under_sanction());
+        } else if (label == "Tax") {
+            btn.setEnabled(!current->is_under_sanction());
+        } else if (label == "Coup") {
+            btn.setEnabled(current->coins() >= 7);
+        } else {
+            btn.setEnabled(true);
         }
     }
+}
+
+
+
+
 
 
 
