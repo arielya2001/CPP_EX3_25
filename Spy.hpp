@@ -10,7 +10,6 @@ namespace coup {
     private:
         std::unordered_map<Player*, int> blocked_arrests;
 
-
     public:
         Spy(Game& game, const std::string& name);
 

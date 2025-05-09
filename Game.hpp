@@ -10,6 +10,8 @@ namespace coup {
         std::vector<Player*> players_list;
         size_t turn_index = 0;
         bool started = false;
+        bool awaiting_bribe_block = false;
+        Player* bribing_player = nullptr;
 
     public:
         Game();
@@ -23,6 +25,14 @@ namespace coup {
         int get_player_index(Player* p) const;
         int get_turn_index() const;
         int num_players() const;
+
+        void set_awaiting_bribe_block(bool val) { awaiting_bribe_block = val; }
+        bool is_awaiting_bribe_block() const { return awaiting_bribe_block; }
+
+        void set_bribing_player(Player* p) { bribing_player = p; }
+        Player* get_bribing_player() const { return bribing_player; }
+        void set_turn_to(Player* player);
+
 
     };
 }

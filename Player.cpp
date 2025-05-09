@@ -34,7 +34,7 @@ namespace coup {
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count >= 10) throw runtime_error("Must perform coup with 10 coins.");
-        if (is_under_sanction()) throw runtime_error("You are under sanction and cannot gather.");
+        if (is_under_sanction()) throw runtime_error("You are under sanction and cannot tax.");
 
         add_coins(2);
         last_action = "tax";
@@ -54,11 +54,27 @@ namespace coup {
             merchant->on_bribed_by(*this);
         }
 
-        // ✅ השחקן מקבל שני תורות בונוס
-        bonus_turns += 1;
+        bonus_turns += 1;  // ניתן תור בונוס, יבוטל אם השופט יחסום
         last_action = "bribe";
 
+        game.set_awaiting_bribe_block(true);
+        game.set_bribing_player(this);
+
+        // חפש שופט חי – אם קיים, העבר אליו את התור
+        for (Player* p : game.get_all_players()) {
+            if (p->is_active() && p->role() == "Judge") {
+                game.set_turn_to(p);
+                return;
+            }
+        }
+
+        // אם אין שופט – ממשיכים כרגיל לתור הבא
+        game.set_awaiting_bribe_block(false);
+        game.set_bribing_player(nullptr);
+        game.next_turn();
     }
+
+
 
 
     void Player::arrest(Player& target) {

@@ -7,6 +7,8 @@
 #include "ActionButton.hpp"
 #include "../Player.hpp"
 #include "../Game.hpp"
+#include "../Judge.hpp"
+#include "../Governor.hpp"
 
 namespace coup {
 
@@ -32,6 +34,7 @@ namespace coup {
         void handleClick(sf::Vector2f pos);
         void addButton(const std::string& label, sf::Vector2f pos, std::function<void()> onClick);
         Player* getCurrentPlayer();
+        void updateButtonStates();
     };
 
 } // namespace coup

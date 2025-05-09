@@ -11,11 +11,15 @@ namespace coup {
         sf::RectangleShape shape;
         sf::Text label;
         std::function<void()> callback;
+        bool enabled = true;
+        std::string textLabel;
+        bool visible = true;
+
 
     public:
         ActionButton(sf::Font& font, const std::string& text, sf::Vector2f position,
                      sf::Vector2f size, std::function<void()> onClick)
-            : callback(std::move(onClick)) {
+            : callback(std::move(onClick)), textLabel(text) {
             shape.setSize(size);
             shape.setPosition(position);
             shape.setFillColor(sf::Color(100, 100, 200));
@@ -32,15 +36,29 @@ namespace coup {
         }
 
         void draw(sf::RenderWindow& window) {
+            if (!visible) return;
             window.draw(shape);
             window.draw(label);
         }
 
+
         void handleClick(sf::Vector2f mousePos) {
-            if (shape.getGlobalBounds().contains(mousePos)) {
+            if (enabled && shape.getGlobalBounds().contains(mousePos)) {
                 callback();
             }
         }
+
+        void setEnabled(bool value) {
+            enabled = value;
+            shape.setFillColor(enabled ? sf::Color(100, 100, 200) : sf::Color(80, 80, 80));
+        }
+
+        const std::string& getLabel() const {
+            return textLabel;
+        }
+        void setVisible(bool value) { visible = value; }
+        bool isVisible() const { return visible; }
+
     };
 
 } // namespace coup

@@ -63,6 +63,7 @@ namespace coup {
         bool has_bonus_turn() const;
         void use_bonus_turn();
         void give_bonus_turns(int turns);
+        int get_bonus_turns() const { return bonus_turns; }
         const std::string& get_last_action() const {
             return last_action;
         }

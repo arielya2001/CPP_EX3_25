@@ -33,7 +33,7 @@ int main() {
 
     GameRenderer renderer(font,game);
     renderer.setPlayers(players);
-    renderer.setTurn("Meirav (Baron)");
+    renderer.setTurn(game.turn());
 
     while (window.isOpen()) {
         sf::Event event;

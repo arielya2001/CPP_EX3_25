@@ -14,5 +14,4 @@ namespace coup {
         // מקבל פיצוי נוסף במקרה של סנקציה
         void on_sanctioned(Player& attacker);
     };
-
 }

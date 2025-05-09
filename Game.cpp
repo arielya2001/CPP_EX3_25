@@ -58,20 +58,31 @@ namespace coup {
     }
 
     void Game::next_turn() {
+        if (awaiting_bribe_block) {
+            awaiting_bribe_block = false;
+            if (bribing_player && bribing_player->is_active()) {
+                turn_index = get_player_index(bribing_player);
+                bribing_player = nullptr;
+                return;
+            }
+        }
         // אם יש לשחקן תור בונוס – משתמש בו ונשאר בתורו
         if (players_list[turn_index]->has_bonus_turn()) {
             players_list[turn_index]->use_bonus_turn();
             return;
         }
+
         for (Player* p : players_list) {
             p->set_arrested_recently(false);
             p->set_sanctioned(false);
         }
+
         // מעבר לשחקן הבא החי
         do {
             turn_index = (turn_index + 1) % players_list.size();
         } while (!players_list[turn_index]->is_active());
 
+        // ניקוי חסימות של Spy
         for (Player* p : players_list) {
             Spy* spy = dynamic_cast<Spy*>(p);
             if (spy && spy->is_active()) {
@@ -96,6 +107,17 @@ namespace coup {
     int Game::num_players() const {
         return static_cast<int>(players_list.size());
     }
+    void Game::set_turn_to(Player* player) {
+        for (size_t i = 0; i < players_list.size(); ++i) {
+            if (players_list[i] == player) {
+                turn_index = i;
+                return;
+            }
+        }
+        throw std::runtime_error("Player not found in game.");
+    }
+
+
 
 
 

@@ -20,6 +20,7 @@ namespace coup {
         void add(const std::string& message);
         void updateTexts();
         void draw(sf::RenderWindow& window);
+
     };
 
 }
