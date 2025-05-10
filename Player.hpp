@@ -12,19 +12,16 @@ namespace coup {
         std::string role_name;
         int coin_count;
         bool active;
-        bool was_arrested_last; // למניעת arrest כפול
-        int bonus_turns = 0;  // NEW
+        bool was_arrested_last;
+        bool gather_blocked;
+        bool sanctioned= false;  // ✅ בוליאני פשוט ויעיל
         std::string last_action;
-        bool gather_blocked = false;
-        bool is_sanctioned = false;
         bool couped_flag = false;
+        int bonus_turns;
+        Player* last_arrested_target;
 
     public:
         Player(Game& game, const std::string& name, const std::string& role);
-        const Game& getGame() const {
-            return game;
-        }
-
         virtual ~Player() = default;
 
         // פעולות בסיסיות
@@ -48,27 +45,35 @@ namespace coup {
         void deactivate(); // אם הודח
         void set_active(bool val);  // מאפשר להחזיר שחקן למשחק
 
-        // יכולת לדעת אם מישהו עשה עליו arrest לאחרונה
+        // arrest
         bool was_arrested_recently() const;
         void set_arrested_recently(bool val);
+
+        // סנקציות ואיסורים
         void set_gather_blocked(bool val) { gather_blocked = val; }
         bool is_gather_blocked() const { return gather_blocked; }
-        bool is_under_sanction() const { return is_sanctioned; }
-        void set_sanctioned(bool val) { is_sanctioned = val; }
+
+        void set_sanctioned(bool val) { sanctioned = val; }
+        bool is_sanctioned() const { return sanctioned; }
+
+        // coup
         bool was_couped() const { return couped_flag; }
         void set_couped(bool val) { couped_flag = val; }
 
-
-
+        // bonus turns
         bool has_bonus_turn() const;
         void use_bonus_turn();
         void give_bonus_turns(int turns);
         int get_bonus_turns() const { return bonus_turns; }
-        const std::string& get_last_action() const {
-            return last_action;
-        }
-        virtual void on_turn_start();
+
+        const std::string& get_last_action() const { return last_action; }
         void clear_last_action();
+        virtual void on_turn_start();  // קריאה בתחילת תור
+
+        const Game& getGame() const {
+            return game;
+        }
+        void set_role_name(const std::string& role);
 
     };
 

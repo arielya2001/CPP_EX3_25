@@ -26,6 +26,7 @@ namespace coup {
         std::vector<ActionButton> targetButtons; // כפתורי בחירה ל-Coup
         std::vector<Player*> players;
         bool selectingCoupTarget = false;
+        std::string current_turn_name; // משתנה לעקוב אחר התור
 
         void updateTextEntries();
 

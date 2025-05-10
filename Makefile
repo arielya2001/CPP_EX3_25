@@ -24,11 +24,12 @@ CORE_SRC = \
     Judge.cpp \
     Merchant.cpp
 
-# קבצי מקור לגרפיקה
+# קבצי מקור לגרפיקה (כולל מסכי פתיחה, הזנת שמות וכו')
 GUI_SRC = \
     gui/main_gui.cpp \
     gui/GameRenderer.cpp \
-    gui/ActionLog.cpp
+    gui/ActionLog.cpp \
+    gui/GuiScreens.cpp
 
 # כל ההאדרים
 HEADERS = \

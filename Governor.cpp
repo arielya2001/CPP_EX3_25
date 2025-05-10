@@ -13,7 +13,7 @@ namespace coup {
         if (!is_active()) throw runtime_error("Inactive player cannot act.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coins() >= 10) throw runtime_error("Must perform coup with 10 coins.");
-        if (is_under_sanction()) throw runtime_error("You are under sanction and cannot tax.");
+        if (is_sanctioned()) throw runtime_error("You are under sanction and cannot tax.");
 
         add_coins(3);
         game.next_turn();

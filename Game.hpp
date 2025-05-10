@@ -28,6 +28,7 @@ namespace coup {
         const std::vector<Player*>& get_all_players() const;
         int get_player_index(Player* p) const;
         int get_turn_index() const;
+
         int num_players() const;
 
         void set_awaiting_bribe_block(bool val) { awaiting_bribe_block = val; }

@@ -7,7 +7,7 @@ using namespace std;
 
 namespace coup {
 
-    Game::Game() : turn_index(0), started(false) {}
+    Game::Game() : turn_index(0), started(false), awaiting_bribe_block(false), bribing_player(nullptr), awaiting_coup_block(false), coup_attacker(nullptr), coup_target(nullptr), total_turns(0) {}
 
     void Game::add_player(Player* player) {
         if (players_list.size() >= 6) {
@@ -21,7 +21,6 @@ namespace coup {
             throw runtime_error("No players in the game.");
         }
 
-        // מדלגים על שחקנים לא פעילים
         size_t idx = turn_index % players_list.size();
         size_t tries = 0;
         while (tries < players_list.size() && !players_list[idx]->is_active()) {
@@ -57,12 +56,16 @@ namespace coup {
     }
 
     void Game::next_turn() {
-        if (players_list[turn_index]->has_bonus_turn()) {
-            players_list[turn_index]->use_bonus_turn();
+        Player* current = players_list[turn_index];
+
+        if (current->has_bonus_turn()) {
+            current->use_bonus_turn();
             total_turns++;
             std::cout << "[Debug] Bonus turn used. Total turns: " << total_turns << std::endl;
             return;
         }
+
+        current->set_sanctioned(false);
 
         total_turns++;
         std::cout << "[Debug] Regular turn. Total turns: " << total_turns << std::endl;
@@ -76,18 +79,25 @@ namespace coup {
             }
         }
 
+        if (awaiting_coup_block) {
+            awaiting_coup_block = false;
+            if (coup_attacker && coup_attacker->is_active()) {
+                turn_index = get_player_index(coup_attacker);
+                return;
+            }
+        }
+
         do {
             turn_index = (turn_index + 1) % players_list.size();
         } while (!players_list[turn_index]->is_active());
-        players_list[turn_index]->on_turn_start();  // ← הוסף את זה כאן
+
         std::cout << "[Debug] Next turn: " << players_list[turn_index]->name() << std::endl;
     }
-
-
 
     const std::vector<Player*>& Game::get_all_players() const {
         return players_list;
     }
+
     int Game::get_player_index(Player* p) const {
         for (size_t i = 0; i < players_list.size(); ++i) {
             if (players_list[i] == p) return i;
@@ -98,9 +108,11 @@ namespace coup {
     int Game::get_turn_index() const {
         return turn_index;
     }
+
     int Game::num_players() const {
         return static_cast<int>(players_list.size());
     }
+
     void Game::set_turn_to(Player* player) {
         for (size_t i = 0; i < players_list.size(); ++i) {
             if (players_list[i] == player) {
@@ -110,6 +122,7 @@ namespace coup {
         }
         throw std::runtime_error("Player not found in game.");
     }
+
     void Game::clear_coup_target() {
         if (awaiting_coup_block && coup_attacker) {
             size_t attacker_index = get_player_index(coup_attacker);
@@ -123,12 +136,4 @@ namespace coup {
         awaiting_coup_block = false;
     }
 
-
-
-
-
-
-
-
-
-}
+} // namespace coup

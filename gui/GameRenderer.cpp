@@ -4,7 +4,7 @@
 
 namespace coup {
 
-    GameRenderer::GameRenderer(sf::Font& font, Game& game) : font(font), game(game) {
+GameRenderer::GameRenderer(sf::Font& font, Game& game) : font(font), game(game), current_turn_name("") {
         turnText.setFont(font);
         turnText.setCharacterSize(24);
         turnText.setFillColor(sf::Color::Cyan);
@@ -339,53 +339,68 @@ buttons.emplace_back(font, "Block Arrest", sf::Vector2f(240, 500), sf::Vector2f(
         buttons.back().setVisible(false);
         buttons.back().setEnabled(false);
 
-        // General - Protect from Coup
-        // כפתור Protect from Coup – זז שמאלה ויותר למטה
-        buttons.emplace_back(font, "Protect from Coup", sf::Vector2f(680, 460), sf::Vector2f(160, 35), [this, &game, &font]() {
-                    std::cout << "Protect from Coup clicked\n";
-            selectingCoupTarget = true;
-            targetButtons.clear();
 
-            Player* general = getCurrentPlayer();
-            if (!general || general->role() != "General" || !general->is_active()) return;
+    buttons.emplace_back(font, "Block Coup", sf::Vector2f(500, 490), sf::Vector2f(120, 35), [this, &game]() {
+        Player* general = getCurrentPlayer();
+        Player* attacker = game.get_coup_attacker();
 
-            float x = 100.f;
-            float y = 570.f;
+        if (!general || general->role() != "General" || !attacker) return;
 
-            for (Player* target : players) {
-                if (target->is_active()) {
-                    std::string label = target->name();
-                    targetButtons.emplace_back(font, label, sf::Vector2f(x, y), sf::Vector2f(100, 30),
-                        [this, general, target, &game, &font]() {
-                            try {
-                                General* realGen = dynamic_cast<General*>(general);
-                                if (!realGen) throw std::runtime_error("Invalid general cast.");
-                                if (realGen->coins() < 5) throw std::runtime_error("Not enough coins to protect.");
+        std::cout << general->name() << " blocked the coup from " << attacker->name() << std::endl;
 
-                                realGen->deduct_coins(5);
-                                realGen->protected_players.insert(target);
-                                std::cout << general->name() << " is now protecting " << target->name() << " from coup.\n";
+        game.set_awaiting_coup_block(false);
 
-                                updateTextEntries();
-                                game.next_turn();
-                                setTurn(game.turn());
-                                updateButtonStates();
-                            } catch (const std::exception& e) {
-                                std::cerr << "ProtectCoup error: " << e.what() << std::endl;
-                            }
-                            selectingCoupTarget = false;
-                        }
-                    );
-                    x += 120;
-                }
-            }
+        // מצא את השחקן הפעיל הבא אחרי התוקף
+        int attackerIndex = game.get_player_index(attacker);
+        const std::vector<Player*>& players = game.get_all_players();
 
-            if (targetButtons.empty()) {
-                selectingCoupTarget = false;
-            }
-        });
-        buttons.back().setVisible(false);
-        buttons.back().setEnabled(false);
+        size_t nextIndex = (attackerIndex + 1) % players.size();
+        while (!players[nextIndex]->is_active()) {
+            nextIndex = (nextIndex + 1) % players.size();
+        }
+
+        game.set_turn_to(players[nextIndex]);
+
+        game.set_coup_attacker(nullptr);
+        game.set_coup_target(nullptr);
+
+        setTurn(game.turn());
+    });
+    buttons.back().setVisible(false);
+    buttons.back().setEnabled(false);
+
+
+    buttons.emplace_back(font, "Skip Coup Block", sf::Vector2f(640, 490), sf::Vector2f(160, 35), [this, &game]() {
+        Player* attacker = game.get_coup_attacker();
+        Player* target = game.get_coup_target();
+
+        if (!attacker || !target) return;
+
+        std::cout << "General skipped coup block.\n";
+
+        // מבצעים את ההפיכה כרגיל
+        target->set_couped(true);
+        target->deactivate();
+        updateTextEntries();  // 👈 זה מרענן את רשימת השחקנים
+
+
+        std::cout << attacker->name() << " performed coup on " << target->name() << std::endl;
+
+        game.set_awaiting_coup_block(false);
+        game.set_coup_attacker(nullptr);
+        game.set_coup_target(nullptr);
+
+        // עוברים לתור שאחרי התוקף
+        int attackerIndex = game.get_player_index(attacker);
+        do {
+            attackerIndex = (attackerIndex + 1) % game.num_players();
+        } while (!game.get_all_players()[attackerIndex]->is_active());
+        game.set_turn_to(game.get_all_players()[attackerIndex]);
+
+        setTurn(game.turn());
+    });
+
+
 
 
 
@@ -419,27 +434,70 @@ buttons.emplace_back(font, "Block Arrest", sf::Vector2f(240, 500), sf::Vector2f(
     }
 
     void GameRenderer::updateTextEntries() {
-        playerTexts.clear();
-        for (size_t i = 0; i < players.size(); ++i) {
-            std::ostringstream oss;
-            oss << players[i]->name() << " (" << players[i]->role() << ") - Coins: "
-                << players[i]->coins() << " - Status: " << (players[i]->is_active() ? "Alive" : "Out");
+    playerTexts.clear();
+    for (size_t i = 0; i < players.size(); ++i) {
+        std::ostringstream oss;
+        oss << players[i]->name() << " (" << players[i]->role() << ") - Coins: "
+            << players[i]->coins() << " - Status: " << (players[i]->is_active() ? "Alive" : "Out");
 
-            sf::Text txt(oss.str(), font, 20);
-            txt.setPosition(100, 140 + i * 30);
-            txt.setFillColor(sf::Color::Yellow);
-            playerTexts.push_back(txt);
-        }
+        sf::Text txt(oss.str(), font, 20);
+        txt.setPosition(100, 140 + i * 30);
+        txt.setFillColor(sf::Color::Yellow);
+        playerTexts.push_back(txt);
     }
+
+    // אם יש מנצח
+    try {
+        std::string winnerName = game.winner();
+        sf::Text winText("🏆 Winner: " + winnerName, font, 36);
+        winText.setFillColor(sf::Color::Green);
+        winText.setPosition(100, 140 + players.size() * 30 + 20);
+        playerTexts.push_back(winText);
+
+        // הצג popup אם השחקן הנוכחי הוא המנצח
+        if (getCurrentPlayer() && getCurrentPlayer()->name() == winnerName) {
+            sf::RenderWindow popup(sf::VideoMode(400, 200), "Victory!");
+            sf::Text text("🏆 Winner: " + winnerName, font, 36);
+            text.setFillColor(sf::Color::Green);
+            text.setPosition(70, 80);
+
+            sf::Clock clock;
+            while (popup.isOpen()) {
+                sf::Event event;
+                while (popup.pollEvent(event)) {
+                    if (event.type == sf::Event::Closed)
+                        popup.close();
+                }
+
+                popup.clear(sf::Color::Black);
+                popup.draw(text);
+                popup.display();
+
+                if (clock.getElapsedTime().asSeconds() > 3) {
+                    popup.close();  // סגור אוטומטית אחרי 3 שניות
+                }
+            }
+
+            exit(0);  // סיים את המשחק
+        }
+    } catch (const std::exception&) {
+        // אין מנצח עדיין
+    }
+}
+
+
 
     void GameRenderer::setTurn(const std::string& name) {
-        turnText.setString("Current Turn: " + name);
+    if (name != current_turn_name) { // קרא ל-on_turn_start רק אם התור השתנה
         Player* current = getCurrentPlayer();
         if (current) {
-            current->on_turn_start(); // קריאה כאן
+            current->on_turn_start();
         }
-        updateButtonStates();
+        current_turn_name = name;
     }
+    turnText.setString("Current Turn: " + name);
+    updateButtonStates();
+}
 
     Player* GameRenderer::getCurrentPlayer() {
         for (auto* p : players) {
@@ -477,6 +535,14 @@ buttons.emplace_back(font, "Block Arrest", sf::Vector2f(240, 500), sf::Vector2f(
 void GameRenderer::updateButtonStates() {
     Player* current = getCurrentPlayer();
     if (!current) return;
+    // אם לשחקן יש 10 מטבעות – הוא חייב לעשות coup
+    bool mustCoup = (current->coins() >= 10);
+        std::cout << "[Debug] Player " << current->name()
+          << " | Coins: " << current->coins()
+          << " | Under sanction? " << current->is_sanctioned()
+          << " | Gather blocked? " << current->is_gather_blocked()
+          << "\n";
+
 
     for (auto& btn : buttons) {
         const std::string& label = btn.getLabel();
@@ -495,7 +561,7 @@ void GameRenderer::updateButtonStates() {
 
         // מצב מיוחד: גנרל בתור חסימת coup
         if (game.is_awaiting_coup_block()) {
-            if (current->role() == "General") {
+            if (current->role() == "General" && current->coins() >= 5) {
                 bool show = (label == "Block Coup" || label == "Skip Coup Block");
                 btn.setVisible(show);
                 btn.setEnabled(show);
@@ -504,6 +570,8 @@ void GameRenderer::updateButtonStates() {
             }
             continue;
         }
+
+
 
         // כפתורים שמוסתרים תמיד חוץ מבמצבים מיוחדים
         if (label == "Block Bribe" || label == "Skip" || label == "Block Coup" || label == "Skip Coup Block") {
@@ -519,12 +587,7 @@ void GameRenderer::updateButtonStates() {
             btn.setEnabled(isGovernor);
             continue;
         }
-        if (label == "Protect from Coup") {
-            bool isGeneral = current->role() == "General" && current->coins() >= 5;
-            btn.setVisible(isGeneral);
-            btn.setEnabled(isGeneral);
-            continue;
-        }
+
 
 
         if (label == "Reveal Coins" || label == "Block Arrest") {
@@ -543,12 +606,23 @@ void GameRenderer::updateButtonStates() {
 
         // --- כל שאר הכפתורים הרגילים ---
         btn.setVisible(true);
-
+        if (mustCoup) {
+            // חייב לבצע coup – כל הכפתורים מושבתים חוץ מ־Coup
+            if (label == "Coup") {
+                btn.setEnabled(true);
+            } else {
+                btn.setEnabled(false);
+            }
+            continue;
+        }
         if (label == "Gather") {
-            btn.setEnabled(!current->is_gather_blocked() && !current->is_under_sanction());
+            std::cout << "[Debug] Gather button enabled: " << (!current->is_gather_blocked() && !current->is_sanctioned()) << "\n";
+            btn.setEnabled(!current->is_gather_blocked() && !current->is_sanctioned());
         } else if (label == "Tax") {
-            btn.setEnabled(!current->is_under_sanction());
-        } else if (label == "Coup") {
+            std::cout << "[Debug] Tax button enabled: " << (!current->is_sanctioned()) << "\n";
+            btn.setEnabled(!current->is_sanctioned());
+        }
+        else if (label == "Coup") {
             btn.setEnabled(current->coins() >= 7);
         } else {
             btn.setEnabled(true);

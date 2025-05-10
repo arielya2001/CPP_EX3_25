@@ -13,17 +13,16 @@ using namespace std;
 namespace coup {
 
     Player::Player(Game& game, const string& name, const string& role)
-        : game(game), player_name(name), role_name(role), coin_count(0), active(true), was_arrested_last(false) {
-        game.add_player(this);
+        : game(game), player_name(name), role_name(role), coin_count(0), active(true),
+          was_arrested_last(false), gather_blocked(false), sanctioned(false), bonus_turns(0) {
     }
 
     void Player::gather() {
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count >= 10) throw runtime_error("Must perform coup with 10 coins.");
-        if (gather_blocked || is_under_sanction()) {
-            throw runtime_error("You are blocked from gathering due to sanction.");
-        }
+        if (sanctioned) throw runtime_error("You are sanctioned and cannot gather.");
+
         add_coins(1);
         last_action = "gather";
         game.next_turn();
@@ -33,12 +32,14 @@ namespace coup {
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count >= 10) throw runtime_error("Must perform coup with 10 coins.");
-        if (is_under_sanction()) throw runtime_error("You are under sanction and cannot tax.");
+        if (sanctioned) throw runtime_error("You are sanctioned and cannot tax.");
 
         add_coins(2);
         last_action = "tax";
         game.next_turn();
     }
+
+
 
     void Player::bribe(Player& target) {
         if (!active) throw runtime_error("Inactive player cannot play.");
@@ -78,13 +79,18 @@ namespace coup {
 
     void Player::arrest(Player& target) {
         if (!active) {
-            throw runtime_error("Inactive player cannot play.");}
+            throw runtime_error("Inactive player cannot play.");
+        }
         if (game.turn() != name()) {
-            throw runtime_error("Not your turn.");}
+            throw runtime_error("Not your turn.");
+        }
         if (!target.is_active()) {
-            throw runtime_error("Target player is not active.");}
-        if (target.was_arrested_recently()) {
-            throw runtime_error("Cannot arrest the same player twice in a row.");}
+            throw runtime_error("Target player is not active.");
+        }
+        if (last_arrested_target == &target) {
+            throw runtime_error("Cannot arrest the same player twice in a row.");
+        }
+
         // בדיקה אם יש Spy שחוסם את ה-arrest
         for (Player* p : game.get_all_players()) {
             Spy* spy = dynamic_cast<Spy*>(p);
@@ -92,15 +98,20 @@ namespace coup {
                 throw runtime_error("Arrest blocked by Spy.");
             }
         }
-        // אם target הוא General – החזר לו את המטבע
-        General* general = dynamic_cast<General*>(&target);
-        if (general != nullptr) {
-            general->refund_arrest_coin();
+
+        if (Merchant* merchant = dynamic_cast<Merchant*>(&target)) {
+            merchant->deduct_coins(2);
+            std::cout << merchant->name() << " paid 2 coins due to arrest (Merchant penalty).\n";
         } else {
             target.deduct_coins(1);
+            if (General* general = dynamic_cast<General*>(&target)) {
+                general->refund_arrest_coin();
+                std::cout << general->name() << " refunded coin due to arrest (General ability).\n";
+            }
         }
+
         // עדכון מצב
-        target.set_arrested_recently(true);
+        last_arrested_target = &target;  // שומר מי נעצר על ידי
         add_coins(1);
         last_action = "arrest";
         game.next_turn();
@@ -108,27 +119,46 @@ namespace coup {
 
 
 
+
+
+
     void Player::sanction(Player& target) {
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
-        if (coin_count < 3) throw runtime_error("Not enough coins for sanction.");
         if (!target.is_active()) throw runtime_error("Target player is not active.");
 
-        deduct_coins(3);
-        target.set_sanctioned(true);
-        Judge* judge = dynamic_cast<Judge*>(&target);
-        if (judge != nullptr) {
-            judge->on_sanctioned(*this);  // 'this' הוא התוקף
+        // בדיקת עלות כוללת מראש (כולל אם זה שופט)
+        int required_coins = 3;
+        if (dynamic_cast<Judge*>(&target)) {
+            required_coins += 1;  // עלות נוספת בגלל Judge
         }
-        // ✅ אם השחקן המותקף הוא Baron – נפצה אותו
-        Baron* baron = dynamic_cast<Baron*>(&target);
-        if (baron != nullptr) {
+
+        if (coin_count < required_coins) {
+            throw runtime_error("Not enough coins for sanction.");
+        }
+
+        // נגבים קודם כל 3 מטבעות
+        deduct_coins(3);
+
+        // הגדרת הסנקציה
+        target.set_sanctioned(true);
+        target.set_gather_blocked(true);
+
+        // השלמה: שופט מחייב את התוקף לעוד מטבע
+        if (Judge* judge = dynamic_cast<Judge*>(&target)) {
+            judge->on_sanctioned(*this);
+        }
+
+        // ברון מקבל קנס
+        if (Baron* baron = dynamic_cast<Baron*>(&target)) {
             baron->receive_sanction_penalty();
         }
-        target.set_gather_blocked(true);
+
         last_action = "sanction";
         game.next_turn();
     }
+
+
 
     void Player::coup(Player& target) {
         if (!active) throw runtime_error("Inactive player cannot play.");
@@ -139,31 +169,34 @@ namespace coup {
         deduct_coins(7);
         last_action = "coup";
 
-        // בדוק אם מישהו מגן על המטרה
+        // בדוק אם יש גנרל חי
         for (Player* p : game.get_all_players()) {
-            if (p->is_active() && p->role() == "General") {
-                General* gen = dynamic_cast<General*>(p);
-                if (gen && gen->is_protecting(&target)) {
-                    std::cout << "❌ Coup failed: " << target.name()
-                              << " is protected from coup by " << gen->name() << std::endl;
-                    game.next_turn();  // מדלגים לתור הבא כרגיל
-                    return;
-                }
+            if (p->is_active() && p->role() == "General" && p->coins() >= 5) {
+                game.set_awaiting_coup_block(true);
+                game.set_coup_attacker(this);
+                game.set_coup_target(&target);
+                game.set_turn_to(p);
+                return;
             }
         }
 
-
-        // אם לא הייתה הגנה – מבצעים coup
+        // אם אין גנרל חי – מבצעים הפיכה רגילה
         target.set_couped(true);
         target.deactivate();
         std::cout << name() << " performed coup on " << target.name() << std::endl;
         game.next_turn();
     }
+
+
     void Player::on_turn_start() {
-        is_sanctioned = false;    // ביטול חסימת tax
-        gather_blocked = false;   // ביטול חסימת gather
-        was_arrested_last = false; // ביטול חסימת arrest כפול, אם רלוונטי
+        was_arrested_last = false;
+        gather_blocked = false;
+        last_arrested_target = nullptr;
     }
+
+
+
+
 
     string Player::name() const {
         return player_name;
@@ -224,6 +257,10 @@ namespace coup {
     void Player::clear_last_action() {
         last_action = "";
     }
+    void Player::set_role_name(const std::string& role) {
+        this->role_name = role;
+    }
+
 
 
 
