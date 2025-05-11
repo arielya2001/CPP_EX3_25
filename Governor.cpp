@@ -16,6 +16,7 @@ namespace coup {
         if (is_sanctioned()) throw runtime_error("You are under sanction and cannot tax.");
 
         add_coins(3);
+        last_action = "tax";
         game.next_turn();
     }
 

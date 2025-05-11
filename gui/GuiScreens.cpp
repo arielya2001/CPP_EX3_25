@@ -12,6 +12,7 @@
 #include "../Baron.hpp"
 #include "../General.hpp"
 #include "../Judge.hpp"
+#include "../Merchant.hpp"
 
 #include <SFML/Graphics.hpp>
 #include <iostream>
@@ -112,61 +113,96 @@ namespace coup
         return false;
     }
 
-    bool runOpeningScreen() {
-        sf::RenderWindow window(sf::VideoMode(1280, 720), "Coup Game");
-        sf::Texture backgroundTexture;
-        if (!backgroundTexture.loadFromFile("resources/Coup-Game-Contents.jpg")) {
-            std::cerr << "Failed to load opening background image" << std::endl;
-            return false;
-        }
-        sf::Sprite background(backgroundTexture);
-        float scaleX = (float)window.getSize().x / backgroundTexture.getSize().x;
-        float scaleY = (float)window.getSize().y / backgroundTexture.getSize().y;
-        background.setScale(scaleX, scaleY);
+bool runOpeningScreen() {
+    sf::RenderWindow window(sf::VideoMode(1280, 720), "Coup Game");
 
-        sf::RectangleShape startButton(sf::Vector2f(300, 80));
-        startButton.setFillColor(sf::Color(255, 215, 0));
-        startButton.setPosition(490, 600);  // אמצע רוחבית, נמוך לגובה סביר
+    sf::Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("resources/opening_screen.png")) {
+        std::cerr << "Failed to load opening background image" << std::endl;
+        return false;
+    }
+    sf::Sprite background(backgroundTexture);
+    background.setScale(
+        (float)window.getSize().x / backgroundTexture.getSize().x,
+        (float)window.getSize().y / backgroundTexture.getSize().y
+    );
 
+    sf::Font font;
+    if (!font.loadFromFile("resources/font.ttf")) { // אפשר להחליף כאן לפונט דרמטי
+        std::cerr << "Failed to load font.ttf" << std::endl;
+        return false;
+    }
 
-        sf::Font font;
-        if (!font.loadFromFile("resources/font.ttf")) {
-            std::cerr << "Failed to load font.ttf" << std::endl;
-            return false;
-        }
+    sf::Vector2f buttonSize(320, 70);
+    sf::RectangleShape startButton(buttonSize);
+    startButton.setFillColor(sf::Color::Black);
+    startButton.setOutlineColor(sf::Color(255, 215, 0)); // Gold
+    startButton.setOutlineThickness(4);
+    startButton.setPosition(
+        (window.getSize().x - buttonSize.x) / 2,
+        window.getSize().y - 140
+    );
 
-        sf::Text startText("Start", font, 36);
-        startText.setFillColor(sf::Color::Black);
-        startButton.setPosition(490, 600); // אמצע החלון פחות או יותר
-        startText.setPosition(540, 625);    // בתוך הכפתור
+    sf::Text startText("Let the Games Begin", font, 34);
+    startText.setFillColor(sf::Color(255, 215, 0)); // Gold
+    sf::FloatRect textBounds = startText.getLocalBounds();
+    startText.setPosition(
+        startButton.getPosition().x + (buttonSize.x - textBounds.width) / 2,
+        startButton.getPosition().y + (buttonSize.y - textBounds.height) / 2 - 10
+    );
 
-        while (window.isOpen()) {
-            sf::Event event;
-            while (window.pollEvent(event)) {
-                if (event.type == sf::Event::Closed)
-                {
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                window.close();
+                return false;
+            }
+
+            if (event.type == sf::Event::MouseButtonPressed &&
+                event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2f mousePos = (sf::Vector2f)sf::Mouse::getPosition(window);
+                if (startButton.getGlobalBounds().contains(mousePos)) {
                     window.close();
-                    return false; // סוגר הכל
-                }
-
-                if (event.type == sf::Event::MouseButtonPressed) {
-                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                    if (startButton.getGlobalBounds().contains((float)mousePos.x, (float)mousePos.y)) {
-                        window.close();
-                        return true; // ממשיכים למשחק
-                    }
+                    return true;
                 }
             }
-            window.clear();
-            window.draw(background);
-            window.draw(startButton);
-            window.draw(startText);
-            window.display();
         }
-        return true; // המשך תקין
+
+        // Hover effect
+        sf::Vector2f mousePos = (sf::Vector2f)sf::Mouse::getPosition(window);
+        if (startButton.getGlobalBounds().contains(mousePos)) {
+            startButton.setOutlineColor(sf::Color::White);
+            startText.setFillColor(sf::Color::White);
+        } else {
+            startButton.setOutlineColor(sf::Color(255, 215, 0));
+            startText.setFillColor(sf::Color(255, 215, 0));
+        }
+
+        window.clear();
+        window.draw(background);
+        window.draw(startButton);
+        window.draw(startText);
+        window.display();
     }
-    bool runAddPlayersScreen(Game& game) {
+
+    return true;
+}
+
+
+bool runAddPlayersScreen(Game& game) {
     sf::RenderWindow window(sf::VideoMode(1280, 720), "Add Players");
+
+    sf::Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("resources/opening_screen.png")) {
+        std::cerr << "Failed to load opening background image" << std::endl;
+        return false;
+    }
+    sf::Sprite background(backgroundTexture);
+    background.setScale(
+        (float)window.getSize().x / backgroundTexture.getSize().x,
+        (float)window.getSize().y / backgroundTexture.getSize().y
+    );
 
     sf::Font font;
     if (!font.loadFromFile("resources/font.ttf")) {
@@ -177,70 +213,66 @@ namespace coup
     std::vector<std::string> playerNames;
     std::string currentInput;
 
-    sf::Text title("Add Players", font, 80);
+    sf::Text title("Add Players", font, 64);
     title.setFillColor(sf::Color::White);
-    title.setPosition(550, 40);
+    title.setPosition(640 - title.getLocalBounds().width / 2, 30);
 
-    sf::Text instruction("(type name + press ENTER)", font, 50);
+    sf::Text instruction("(type name + press ENTER)", font, 36);
     instruction.setFillColor(sf::Color::White);
-    instruction.setPosition(440, 140);
+    instruction.setPosition(640 - instruction.getLocalBounds().width / 2, 110);
 
-    sf::Text inputText("", font, 40);
+    sf::Text inputText("", font, 30);
     inputText.setFillColor(sf::Color::Black);
-    sf::RectangleShape inputBox(sf::Vector2f(500, 60));
+    sf::RectangleShape inputBox(sf::Vector2f(500, 50));
     inputBox.setFillColor(sf::Color::White);
-    inputBox.setPosition(400, 230);
-    inputText.setPosition(410, 235);
+    inputBox.setPosition(390, 170);
+    inputText.setPosition(400, 180);
 
-    sf::Text playersLabel("Players:", font, 54);
+    sf::Text playersLabel("Players:", font, 40);
     playersLabel.setFillColor(sf::Color::Yellow);
-    playersLabel.setPosition(400, 320);
+    playersLabel.setPosition(390, 250);
 
-    sf::RectangleShape startButton(sf::Vector2f(300, 90));
-    startButton.setFillColor(sf::Color(128, 128, 128));
-        startButton.setPosition(490, 600);  // אמצע רוחבית, נמוך לגובה סביר
-    sf::Text startText("Start Game", font, 42);
-    startText.setFillColor(sf::Color::Black);
-    startText.setPosition(540, 625);
+    // Use consistent button size with opening screen
+    sf::Vector2f buttonSize(310, 65);
+    sf::RectangleShape startButton(buttonSize);
+    startButton.setFillColor(sf::Color::Black);
+    startButton.setOutlineColor(sf::Color(255, 215, 0));
+    startButton.setOutlineThickness(4);
+    startButton.setPosition((1280 - buttonSize.x) / 2, 600);
+
+    sf::Text startText("Gather the Players", font, 34);
+    startText.setFillColor(sf::Color(255, 215, 0));
+    sf::FloatRect textBounds = startText.getLocalBounds();
+    startText.setPosition(
+        startButton.getPosition().x + (buttonSize.x - textBounds.width) / 2,
+        startButton.getPosition().y + (buttonSize.y - textBounds.height) / 2 - 10
+    );
 
     while (window.isOpen()) {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-            {
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
                 window.close();
                 return false;
             }
 
             if (event.type == sf::Event::TextEntered) {
-                if (event.text.unicode == '\b') {
-                    if (!currentInput.empty())
-                        currentInput.pop_back();
+                if (event.text.unicode == '\b' && !currentInput.empty()) {
+                    currentInput.pop_back();
                 } else if (event.text.unicode == '\r') {
-                    if (!currentInput.empty()) {
-                        bool exists = false;
-                        for (const auto& name : playerNames) {
-                            if (name == currentInput) {
-                                exists = true;
-                                break;
-                            }
-                        }
-                        if (!exists && playerNames.size() < 6) {
-                            playerNames.push_back(currentInput);
-                        }
-                        currentInput.clear();
+                    if (!currentInput.empty() && playerNames.size() < 6 &&
+                        std::find(playerNames.begin(), playerNames.end(), currentInput) == playerNames.end()) {
+                        playerNames.push_back(currentInput);
                     }
+                    currentInput.clear();
                 } else if (event.text.unicode < 128) {
                     currentInput += static_cast<char>(event.text.unicode);
                 }
             }
 
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-
-                // Start button
-                if (startButton.getGlobalBounds().contains((float)mousePos.x, (float)mousePos.y)) {
+                sf::Vector2f mousePos = (sf::Vector2f)sf::Mouse::getPosition(window);
+                if (startButton.getGlobalBounds().contains(mousePos)) {
                     if (playerNames.size() >= 2 && playerNames.size() <= 6) {
                         for (const auto& name : playerNames) {
                             game.add_player(new Player(game, name, ""));
@@ -248,15 +280,10 @@ namespace coup
                         window.close();
                     }
                 }
-
-                // Remove buttons
-                float listStartY = 430;
+                float listStartY = 320;
                 for (size_t i = 0; i < playerNames.size(); ++i) {
-                    float boxX = 700;
-                    float boxY = listStartY + i * 60;
-
-                    sf::FloatRect removeBox(boxX, boxY, 30, 30);
-                    if (removeBox.contains((float)mousePos.x, (float)mousePos.y)) {
+                    sf::FloatRect removeBox(700, listStartY + i * 45, 30, 30);
+                    if (removeBox.contains(mousePos)) {
                         playerNames.erase(playerNames.begin() + i);
                         break;
                     }
@@ -264,60 +291,64 @@ namespace coup
             }
         }
 
+        // Hover effect
+        sf::Vector2f mousePos = (sf::Vector2f)sf::Mouse::getPosition(window);
+        if (startButton.getGlobalBounds().contains(mousePos)) {
+            startButton.setOutlineColor(sf::Color::White);
+            startText.setFillColor(sf::Color::White);
+        } else {
+            startButton.setOutlineColor(sf::Color(255, 215, 0));
+            startText.setFillColor(sf::Color(255, 215, 0));
+        }
+
         inputText.setString(currentInput);
 
-        window.clear(sf::Color(150, 90, 40));
+        window.clear();
+        window.draw(background);
         window.draw(title);
         window.draw(instruction);
         window.draw(inputBox);
         window.draw(inputText);
         window.draw(playersLabel);
 
-        float listStartY = 430;
+        float listStartY = 320;
         for (size_t i = 0; i < playerNames.size(); ++i) {
-            sf::Text playerText("- " + playerNames[i], font, 44);
+            sf::Text playerText("- " + playerNames[i], font, 32);
             playerText.setFillColor(sf::Color::White);
-            playerText.setPosition(400, listStartY + i * 60);
+            playerText.setPosition(390, listStartY + i * 45);
             window.draw(playerText);
-
-            float boxX = 700;
-            float boxY = listStartY + i * 60;
 
             sf::RectangleShape removeBox(sf::Vector2f(30, 30));
             removeBox.setFillColor(sf::Color::Red);
-            removeBox.setPosition(boxX, boxY);
+            removeBox.setPosition(700, listStartY + i * 45);
             window.draw(removeBox);
 
-            sf::Text xText("X", font, 24);
+            sf::Text xText("X", font, 22);
             xText.setFillColor(sf::Color::White);
-            float xCenter = boxX + (30 - xText.getLocalBounds().width) / 2;
-            float yCenter = boxY + (30 - xText.getLocalBounds().height) / 2 - 5;
-            xText.setPosition(xCenter, yCenter);
+            xText.setPosition(710, listStartY + i * 45);
             window.draw(xText);
         }
-
-        if (playerNames.size() >= 2 && playerNames.size() <= 6)
-            startButton.setFillColor(sf::Color(0, 200, 0));
-        else
-            startButton.setFillColor(sf::Color(128, 128, 128));
 
         window.draw(startButton);
         window.draw(startText);
         window.display();
     }
-        return true;
+
+    return true;
 }
-bool runAssignRolesScreen(Game& game) {
+
+
+    bool runAssignRolesScreen(Game& game) {
     sf::RenderWindow window(sf::VideoMode(1280, 720), "Assign Roles");
 
     sf::Font font;
     if (!font.loadFromFile("resources/font.ttf")) {
         std::cerr << "Failed to load font.ttf" << std::endl;
-        return false;  // ✅ תקין!
+        return false;
     }
 
     sf::Texture backgroundTexture;
-    if (!backgroundTexture.loadFromFile("resources/Coup-Game-Contents.jpg")) {
+    if (!backgroundTexture.loadFromFile("resources/opening_screen.png")) {
         std::cerr << "Failed to load background image" << std::endl;
         return false;
     }
@@ -330,9 +361,9 @@ bool runAssignRolesScreen(Game& game) {
 
     sf::Text title("Assigning Roles", font, 60);
     title.setFillColor(sf::Color::White);
-    title.setPosition(450, 40);
+    title.setPosition(640 - title.getLocalBounds().width / 2, 40);
 
-    const std::vector<Player*>& players = game.get_all_players();
+    std::vector<Player*>& players = const_cast<std::vector<Player*>&>(game.get_all_players());
     size_t currentPlayerIndex = 0;
 
     std::random_device rd;
@@ -342,51 +373,76 @@ bool runAssignRolesScreen(Game& game) {
         "Governor", "Spy", "Baron", "General", "Judge", "Merchant"
     };
 
-    // כפתור "Start Game"
-    sf::RectangleShape startButton(sf::Vector2f(300, 90));
-    startButton.setFillColor(sf::Color(100, 255, 100));
-        startButton.setPosition(490, 620);
+    sf::Vector2f buttonSize(330, 70);
+    sf::RectangleShape startButton(buttonSize);
+    startButton.setFillColor(sf::Color::Black);
+    startButton.setOutlineColor(sf::Color(255, 215, 0)); // זהב
+    startButton.setOutlineThickness(4);
+    startButton.setPosition((1280 - buttonSize.x) / 2, 600);
 
-    sf::Text startText("Start Game", font, 42);
-    startText.setFillColor(sf::Color::Black);
-        startText.setPosition(540, 645);
+    sf::Text startText("The Deception Begins", font, 34);
+    startText.setFillColor(sf::Color(255, 215, 0)); // זהב
+    sf::FloatRect textBounds = startText.getLocalBounds();
+    startText.setPosition(
+        startButton.getPosition().x + (buttonSize.x - textBounds.width) / 2,
+        startButton.getPosition().y + (buttonSize.y - textBounds.height) / 2 - 10
+    );
 
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
-            {
+            if (event.type == sf::Event::Closed) {
                 window.close();
                 return false;
             }
 
-            // הקצאת תפקיד עם ENTER
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
                 if (currentPlayerIndex < players.size()) {
                     std::uniform_int_distribution<> dis(0, roleNames.size() - 1);
                     std::string role = roleNames[dis(gen)];
-                    players[currentPlayerIndex]->set_role_name(role);
+                    std::string name = players[currentPlayerIndex]->name();
+
+                    Player* newPlayer = nullptr;
+                    if (role == "Governor") newPlayer = new Governor(game, name);
+                    else if (role == "Spy") newPlayer = new Spy(game, name);
+                    else if (role == "Baron") newPlayer = new Baron(game, name);
+                    else if (role == "General") newPlayer = new General(game, name);
+                    else if (role == "Judge") newPlayer = new Judge(game, name);
+                    else if (role == "Merchant") newPlayer = new Merchant(game, name);
+
+                    delete players[currentPlayerIndex];
+                    players[currentPlayerIndex] = newPlayer;
+
                     currentPlayerIndex++;
                 }
             }
 
-            // לחיצה על כפתור התחלה
-            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                if (startButton.getGlobalBounds().contains((float)mousePos.x, (float)mousePos.y)) {
-                    if (currentPlayerIndex >= players.size()) {
-                        window.close();  // יציאה למסך המשחק
-                        return true;
-                    }
+            if (event.type == sf::Event::MouseButtonPressed &&
+                event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2f mousePos = (sf::Vector2f)sf::Mouse::getPosition(window);
+                if (startButton.getGlobalBounds().contains(mousePos) &&
+                    currentPlayerIndex >= players.size()) {
+                    window.close();
+                    return true;
                 }
             }
+        }
+
+        // עיצוב Hover
+        sf::Vector2f mousePos = (sf::Vector2f)sf::Mouse::getPosition(window);
+        if (startButton.getGlobalBounds().contains(mousePos)) {
+            startButton.setOutlineColor(sf::Color::White);
+            startText.setFillColor(sf::Color::White);
+        } else {
+            startButton.setOutlineColor(sf::Color(255, 215, 0));
+            startText.setFillColor(sf::Color(255, 215, 0));
         }
 
         window.clear();
         window.draw(background);
         window.draw(title);
 
-        float yOffset = 180;
+        float yOffset = 160;
         for (size_t i = 0; i < players.size(); ++i) {
             std::string displayText = players[i]->name();
             if (i < currentPlayerIndex) {
@@ -396,10 +452,10 @@ bool runAssignRolesScreen(Game& game) {
             }
 
             sf::Text playerText(displayText, font, 36);
-            playerText.setFillColor(i < currentPlayerIndex ? sf::Color::Green : sf::Color::White);
-            playerText.setPosition(150, yOffset);
+            playerText.setFillColor(i < currentPlayerIndex ? sf::Color(255, 215, 0) : sf::Color::White);
+            playerText.setPosition(160, yOffset);
             window.draw(playerText);
-            yOffset += 60;
+            yOffset += 55;
         }
 
         if (currentPlayerIndex >= players.size()) {
@@ -409,40 +465,97 @@ bool runAssignRolesScreen(Game& game) {
 
         window.display();
     }
+
+    return true;
 }
 
-    void runGameLoopScreen(Game& game) {
-        sf::RenderWindow window(sf::VideoMode(1280, 720), "Coup Game - GUI");
 
-        sf::Font font;
-        if (!font.loadFromFile("resources/font.ttf")) {
-            std::cerr << "Failed to load font.ttf" << std::endl;
-            return;
-        }
+void runGameLoopScreen(Game& game) {
+    sf::RenderWindow window(sf::VideoMode(1280, 720), "Coup Game - GUI");
 
-        // יצירת renderer והכנת השחקנים
-        GameRenderer renderer(font, game);
-        renderer.setPlayers(game.get_all_players());
-        renderer.setTurn(game.turn());
+    sf::Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("resources/opening_screen.png")) {
+        std::cerr << "Failed to load background image" << std::endl;
+        return;
+    }
+    sf::Sprite background(backgroundTexture);
+    background.setScale(
+        (float)window.getSize().x / backgroundTexture.getSize().x,
+        (float)window.getSize().y / backgroundTexture.getSize().y
+    );
 
-        while (window.isOpen()) {
-            sf::Event event;
-            while (window.pollEvent(event)) {
-                if (event.type == sf::Event::Closed)
-                {
-                    window.close();
-                }
+    sf::Font font;
+    if (!font.loadFromFile("resources/font.ttf")) {
+        std::cerr << "Failed to load font.ttf" << std::endl;
+        return;
+    }
 
-                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                    sf::Vector2f clickPos(event.mouseButton.x, event.mouseButton.y);
-                    renderer.handleClick(clickPos);
-                }
+    GameRenderer renderer(font, game);
+    renderer.setPlayers(game.get_all_players());
+    renderer.setTurn(game.turn());
+
+    bool gameEnded = false;
+    bool showWinnerPopup = false;
+    std::string winnerName;
+
+    while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+
+            if (!gameEnded && event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2f clickPos(event.mouseButton.x, event.mouseButton.y);
+                renderer.handleClick(clickPos);
             }
 
-            window.clear(sf::Color(30, 30, 30));
-            renderer.draw(window);
-            window.display();
+            if (showWinnerPopup && event.type == sf::Event::MouseButtonPressed) {
+                window.close();  // סגור רק לאחר לחיצה, לא אוטומטית
+            }
         }
+
+        // Try to check for winner only if game not ended
+        if (!gameEnded) {
+            try {
+                winnerName = game.winner();  // אם אין מנצח עדיין, תיזרק שגיאה
+                gameEnded = true;
+                showWinnerPopup = true;
+            } catch (const std::exception&) {
+                // No winner yet – ignore
+            }
+        }
+
+        window.clear();
+        window.draw(background);
+        renderer.draw(window);
+
+        if (showWinnerPopup) {
+            // תיבת ניצחון באמצע המסך
+            sf::RectangleShape popup(sf::Vector2f(500, 200));
+            popup.setFillColor(sf::Color(0, 0, 0, 230));
+            popup.setOutlineColor(sf::Color(255, 215, 0));
+            popup.setOutlineThickness(4);
+            popup.setPosition(390, 260);
+
+            sf::Text winText(winnerName + " wins the game!", font, 36);
+            winText.setFillColor(sf::Color(255, 215, 0));
+            sf::FloatRect textBounds = winText.getLocalBounds();
+            winText.setPosition(640 - textBounds.width / 2, 300);
+
+            sf::Text exitText("Click anywhere to exit...", font, 24);
+            exitText.setFillColor(sf::Color::White);
+            sf::FloatRect exitBounds = exitText.getLocalBounds();
+            exitText.setPosition(640 - exitBounds.width / 2, 370);
+
+            window.draw(popup);
+            window.draw(winText);
+            window.draw(exitText);
+        }
+
+        window.display();
     }
+}
+
+
 }
 

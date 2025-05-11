@@ -68,12 +68,11 @@ namespace coup {
             }
         }
 
-        // אם אין שופט – ממשיכים כרגיל לתור הבא
+        // אם אין שופט – לא ניתן לבטל, ממשיכים ישירות לבונוס של המשחד
         game.set_awaiting_bribe_block(false);
         game.set_bribing_player(nullptr);
-        game.next_turn();
+        game.set_turn_to(this);  // תור חוזר למשחד
     }
-
 
 
 
@@ -108,11 +107,11 @@ namespace coup {
                 general->refund_arrest_coin();
                 std::cout << general->name() << " refunded coin due to arrest (General ability).\n";
             }
+            add_coins(1);
         }
 
         // עדכון מצב
         last_arrested_target = &target;  // שומר מי נעצר על ידי
-        add_coins(1);
         last_action = "arrest";
         game.next_turn();
     }
