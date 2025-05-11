@@ -103,12 +103,13 @@ namespace coup {
             std::cout << merchant->name() << " paid 2 coins due to arrest (Merchant penalty).\n";
         } else {
             target.deduct_coins(1);
+            this->add_coins(1);
             if (General* general = dynamic_cast<General*>(&target)) {
                 general->refund_arrest_coin();
+                this->deduct_coins(1);
                 std::cout << general->name() << " refunded coin due to arrest (General ability).\n";
             }
         }
-
         // עדכון מצב
         last_arrested_target = &target;  // שומר מי נעצר על ידי
         last_action = "arrest";

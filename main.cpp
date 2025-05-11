@@ -1,3 +1,4 @@
+#include <iostream>
 #include "Game.hpp"
 #include "Governor.hpp"
 #include "Spy.hpp"
@@ -5,101 +6,124 @@
 #include "General.hpp"
 #include "Judge.hpp"
 #include "Merchant.hpp"
-#include <iostream>
-#include <vector>
 
 using namespace std;
 using namespace coup;
 
-void forceTurn(Game& game, Player* p) {
-    game.set_turn_to(p);
+void print_status(const Game& game) {
+    cout << "\n--- Status ---" << endl;
+    for (Player* p : game.get_all_players()) {
+        cout << p->name() << " (" << p->role() << ") - Coins: " << p->coins()
+             << " - " << (p->is_active() ? "Alive" : "Out") << endl;
+    }
 }
 
-int main() {
+void game1() {
+    cout << "\n==== Game 1 ====" << endl;
     Game game;
 
-    // יצירת שחקנים עם כל התפקידים
-    Governor* governor = new Governor(game, "Gili");
-    Spy* spy = new Spy(game, "Shai");
-    Baron* baron = new Baron(game, "Tamar");
-    General* general = new General(game, "Noam");
-    Judge* judge = new Judge(game, "Dana");
-    Merchant* merchant = new Merchant(game, "Lior");
+    Governor g(game, "Gili");
+    Spy s(game, "Shai");
+    Baron b(game, "Tamar");
 
-    // הוספת השחקנים למשחק
-    game.add_player(governor);
-    game.add_player(spy);
-    game.add_player(baron);
-    game.add_player(general);
-    game.add_player(judge);
-    game.add_player(merchant);
+    game.add_player(&g);
+    game.add_player(&s);
+    game.add_player(&b);
 
-    // הדגמה: כופים תור לפי צורך, מבצעים פעולה, והתור ימשיך לבד
-    forceTurn(game, governor);
-    governor->tax();
+    g.gather(); print_status(game);
+    s.gather(); print_status(game);
+    b.gather(); print_status(game);
 
-    forceTurn(game, spy);
-    cout << "Spy sees " << baron->name() << " has " << spy->spy_on(*baron) << " coins\n";
+    g.tax(); print_status(game);
+    s.tax(); print_status(game);
+    b.tax(); print_status(game);
 
-    forceTurn(game, baron);
-    baron->invest(); // צריך 3 מטבעות, נניח יש לו
+    g.tax(); print_status(game);
+    s.tax(); print_status(game);
+    b.tax(); print_status(game);
 
-    forceTurn(game, general);
-    general->gather();
+    g.bribe(s); print_status(game);
+    g.arrest(s); print_status(game);
+    g.tax(); print_status(game);
 
-    forceTurn(game, judge);
-    judge->gather();
+    s.gather(); print_status(game);
+    b.sanction(g); print_status(game);
 
-    forceTurn(game, merchant);
-    merchant->gather(); // תור ראשון
-
-    forceTurn(game, merchant);
-    merchant->gather(); // תור שני
-
-    forceTurn(game, merchant);
-    merchant->gather(); // תור שלישי, אמור לקבל בונוס
-
-    forceTurn(game, general);
-    general->arrest(*judge); // אמור לעבוד – שופט מפסיד מטבע או merchant מפעיל תכונה
-
-    forceTurn(game, judge);
-    judge->sanction(*baron);
-
-    forceTurn(game, spy);
-    spy->block_arrest(*general);
-
-    forceTurn(game, baron);
-    baron->bribe(*general); // נותן תור בונוס אלא אם השופט ייחסום
-
-    forceTurn(game, judge);
-    judge->block_bribe(*baron);
-
-    // קידום לקראת coup
-    forceTurn(game, general);
-    general->add_coins(10); // בכוונה – להכין ל־coup
-    general->coup(*spy);
-
-    // סיום המשחק – תור רגיל
-    while (game.players().size() > 1) {
-        string curr = game.turn();
-        for (Player* p : game.get_all_players()) {
-            if (p->name() == curr && p->is_active()) {
-                try {
-                    p->gather();
-                } catch (...) {}
-                break;
-            }
-        }
+    try {
+        g.tax();
+    } catch (const exception& e) {
+        cout << "[Error] " << g.name() << ": " << e.what() << endl;
     }
 
+    g.coup(b); print_status(game);
+    s.tax(); print_status(game);
+    g.tax(); print_status(game);
+    s.coup(g); print_status(game);
+
     cout << "\n🏆 Winner: " << game.winner() << endl;
+}
 
-    delete governor;
-    delete spy;
-    delete baron;
-    delete general;
-    delete judge;
-    delete merchant;
+void game2() {
+    cout << "\n==== Game 2 ====" << endl;
+    Game game;
 
+    Baron bar(game, "Tamar");
+    Merchant merch(game, "Noam");
+    Governor gov(game, "Gili");
+    Spy spidy(game, "spido");
+
+    game.add_player(&bar);
+    game.add_player(&merch);
+    game.add_player(&gov);
+    game.add_player(&spidy);
+
+    bar.gather(); print_status(game);
+    merch.gather(); print_status(game);
+    gov.gather(); print_status(game);
+    spidy.gather(); print_status(game);
+
+
+    bar.tax(); print_status(game);
+    merch.tax(); print_status(game);
+    gov.tax(); print_status(game);
+    spidy.tax(); print_status(game);
+
+    bar.invest(); print_status(game);
+    merch.tax(); print_status(game);
+    gov.tax(); print_status(game);
+    spidy.tax(); print_status(game);
+
+    bar.tax(); print_status(game); //8
+    merch.tax(); print_status(game);
+    gov.undo(spidy); print_status(game);
+    spidy.spy_on(bar); print_status(game);
+    spidy.block_arrest(bar); print_status(game);
+    spidy.tax(); print_status(game);
+    try {
+        bar.arrest(merch); print_status(game);
+    } catch (const exception& e) {
+        cout << ":" << e.what() << endl;
+    }
+    bar.coup(spidy); print_status(game);
+    merch.coup(gov); print_status(game);
+
+    bar.tax(); print_status(game);
+    merch.tax(); print_status(game);
+
+    bar.tax(); print_status(game);
+    merch.tax(); print_status(game);
+
+    bar.tax(); print_status(game);
+    merch.tax(); print_status(game);
+
+    bar.coup(merch); print_status(game);
+
+    cout << "\n🏆 Winner: " << game.winner() << endl;
+}
+
+
+int main() {
+    game1();
+    game2();
     return 0;
 }

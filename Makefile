@@ -81,4 +81,5 @@ run-gui: $(GUI_TARGET)
 
 
 clean:
-	rm -f $(TARGET) $(GUI_TARGET) $(TEST_TARGET)
+	rm -f $(TARGET) $(GUI_TARGET) $(TEST_TARGET) main
+
