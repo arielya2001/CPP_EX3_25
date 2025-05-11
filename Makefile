@@ -66,6 +66,9 @@ $(GUI_TARGET): $(CORE_SRC) $(GUI_SRC) $(HEADERS)
 test: $(CORE_SRC) $(TEST_SRC)
 	$(CXX) $(CXXFLAGS) -o $(TEST_TARGET) $(CORE_SRC) $(TEST_SRC)
 
+main: main.cpp $(CORE_SRC)
+	$(CXX) $(CXXFLAGS) -o main main.cpp $(CORE_SRC)
+
 run-test: test
 	./$(TEST_TARGET)
 

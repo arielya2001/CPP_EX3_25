@@ -11,73 +11,75 @@
 using namespace std;
 using namespace coup;
 
+void forceTurn(Game& game, Player* p) {
+    game.set_turn_to(p);
+}
+
 int main() {
     Game game;
 
     // יצירת שחקנים עם כל התפקידים
-    Governor governor(game, "Gili");
-    Spy spy(game, "Shai");
-    Baron baron(game, "Tamar");
-    General general(game, "Noam");
-    Judge judge(game, "Dana");
-    Merchant merchant(game, "Lior");
+    Governor* governor = new Governor(game, "Gili");
+    Spy* spy = new Spy(game, "Shai");
+    Baron* baron = new Baron(game, "Tamar");
+    General* general = new General(game, "Noam");
+    Judge* judge = new Judge(game, "Dana");
+    Merchant* merchant = new Merchant(game, "Lior");
 
-    // הדגמת פעולות בסיסיות
-    governor.tax(); // לוקח 3 מטבעות
-    spy.spy_on(baron); // רואה את כמות המטבעות
-    baron.invest(); // משקיע 3 ומקבל 6
-    general.gather(); // איסוף רגיל
-    judge.gather(); // איסוף רגיל
-    merchant.gather(); // איסוף רגיל
+    // הוספת השחקנים למשחק
+    game.add_player(governor);
+    game.add_player(spy);
+    game.add_player(baron);
+    game.add_player(general);
+    game.add_player(judge);
+    game.add_player(merchant);
 
-    // הפעלת סיבוב נוסף להדגמת שוחד
-    governor.gather();
-    spy.block_arrest(general); // חוסם את גנרל
-    baron.gather();
-    general.gather();
-    judge.gather();
-    merchant.gather();
+    // הדגמה: כופים תור לפי צורך, מבצעים פעולה, והתור ימשיך לבד
+    forceTurn(game, governor);
+    governor->tax();
 
-    // merchant מתחיל תור עם 3 מטבעות => מקבל אחד נוסף
-    merchant.gather(); // אמור להוסיף עוד אחד חינם
+    forceTurn(game, spy);
+    cout << "Spy sees " << baron->name() << " has " << spy->spy_on(*baron) << " coins\n";
 
-    // הדגמת arrest + block של general
-    governor.gather();
-    spy.gather();
-    baron.gather();
-    general.arrest(judge); // גנרל נעצר => מקבל בחזרה את המטבע
+    forceTurn(game, baron);
+    baron->invest(); // צריך 3 מטבעות, נניח יש לו
 
-    // הדגמת sanction עם Judge ו-Baron
-    judge.sanction(baron); // Judge => מטיל סנקציה + גובה עוד מטבע מהשחקן
+    forceTurn(game, general);
+    general->gather();
 
-    // הדגמת שוחד שנחסם ע"י שופט
-    merchant.gather();
-    governor.gather();
-    spy.gather();
-    baron.bribe(general); // אמור להעביר תור לשופט
-    judge.block_bribe(baron); // שופט חוסם => הברון מפסיד 4 מטבעות
+    forceTurn(game, judge);
+    judge->gather();
 
-    // הדגמת הפיכה
-    general.gather(); // צובר מטבעות
-    judge.gather();
-    merchant.gather();
-    governor.gather();
-    spy.gather();
-    baron.gather();
-    general.gather(); // צובר ל-7
-    general.coup(spy); // גנרל מבצע הפיכה על מרגל
+    forceTurn(game, merchant);
+    merchant->gather(); // תור ראשון
 
-    // ניסיון הפיכה על ברון => גנרל חוסם
-    judge.gather();
-    merchant.gather();
-    governor.gather();
-    baron.gather();
-    general.gather();
-    judge.gather();
-    merchant.gather();
-    general.coup(baron); // ברון עדיין במשחק => גנרל יכול לחסום אם יש לו 5+
+    forceTurn(game, merchant);
+    merchant->gather(); // תור שני
 
-    // סיום המשחק עד שנשאר מנצח
+    forceTurn(game, merchant);
+    merchant->gather(); // תור שלישי, אמור לקבל בונוס
+
+    forceTurn(game, general);
+    general->arrest(*judge); // אמור לעבוד – שופט מפסיד מטבע או merchant מפעיל תכונה
+
+    forceTurn(game, judge);
+    judge->sanction(*baron);
+
+    forceTurn(game, spy);
+    spy->block_arrest(*general);
+
+    forceTurn(game, baron);
+    baron->bribe(*general); // נותן תור בונוס אלא אם השופט ייחסום
+
+    forceTurn(game, judge);
+    judge->block_bribe(*baron);
+
+    // קידום לקראת coup
+    forceTurn(game, general);
+    general->add_coins(10); // בכוונה – להכין ל־coup
+    general->coup(*spy);
+
+    // סיום המשחק – תור רגיל
     while (game.players().size() > 1) {
         string curr = game.turn();
         for (Player* p : game.get_all_players()) {
@@ -85,10 +87,19 @@ int main() {
                 try {
                     p->gather();
                 } catch (...) {}
+                break;
             }
         }
     }
 
-    cout << "\nWinner: " << game.winner() << endl;
+    cout << "\n🏆 Winner: " << game.winner() << endl;
+
+    delete governor;
+    delete spy;
+    delete baron;
+    delete general;
+    delete judge;
+    delete merchant;
+
     return 0;
 }

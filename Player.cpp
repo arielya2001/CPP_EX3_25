@@ -107,7 +107,6 @@ namespace coup {
                 general->refund_arrest_coin();
                 std::cout << general->name() << " refunded coin due to arrest (General ability).\n";
             }
-            add_coins(1);
         }
 
         // עדכון מצב
