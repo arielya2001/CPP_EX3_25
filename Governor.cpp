@@ -91,6 +91,7 @@ void Governor::undo(Player& target) {
         const auto& players = game.get_all_players();
         do { index = (index + 1) % players.size(); } while (!players[index]->is_active());
         game.set_turn_to(players[index]);
+        game.set_turn_index(index);  // ← נשמור את המיקום החדש
     }
 }
 
