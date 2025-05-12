@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <deque>  // למעלה בקובץ
+#include <stddef.h> // גרסה C-style, גם תקפה
 
 namespace coup {
     class Player;  // קדימה להכרזה – כי Game משתמש במחלקה לפני שהיא מוגדרת
@@ -17,6 +19,18 @@ namespace coup {
         Player* coup_target = nullptr;
         bool awaiting_coup_block = false;
 
+        bool awaiting_tax_block = false;
+        Player* tax_target = nullptr;
+        Player* tax_source = nullptr;
+
+        int last_tax_index = -1;
+        std::deque<Player*> tax_blockers_queue;  // ⬅️ חדש
+
+
+
+
+
+
     public:
         Game();
 
@@ -30,6 +44,10 @@ namespace coup {
         int get_turn_index() const;
 
         int num_players() const;
+        void set_turn_index(size_t index) {
+            turn_index = index;
+        }
+
 
         void set_awaiting_bribe_block(bool val) { awaiting_bribe_block = val; }
         bool is_awaiting_bribe_block() const { return awaiting_bribe_block; }
@@ -47,6 +65,31 @@ namespace coup {
         void set_coup_target(Player* p) { coup_target = p; }
         Player* get_coup_target() const { return coup_target; }
         void clear_coup_target();
+
+        bool is_awaiting_tax_block() const { return awaiting_tax_block; }
+        void set_awaiting_tax_block(bool val) { awaiting_tax_block = val; }
+        Player* get_tax_target() const { return tax_target; }
+        void set_tax_target(Player* p) { tax_target = p; }
+        Player* get_tax_source() const { return tax_source; }
+        void set_tax_source(Player* p) { tax_source = p; }
+
+        void set_last_tax_index(int idx) { last_tax_index = idx; }
+        int get_last_tax_index() const { return last_tax_index; }
+
+        void set_last_tax_index_if_needed(int index) {
+            if (!awaiting_tax_block) {
+                last_tax_index = index;
+            }
+        }
+
+        void init_tax_blockers(Player* initiator);
+        Player* pop_next_tax_blocker();
+
+
+
+
+
+
 
 
 

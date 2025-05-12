@@ -10,6 +10,9 @@ namespace coup {
 
         void tax() override;
         void undo(Player& target) override;
+        void block_tax(Player& target);
+        void skip_tax_block();
+
     };
 
 }

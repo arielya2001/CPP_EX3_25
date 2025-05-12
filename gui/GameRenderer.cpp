@@ -160,42 +160,69 @@ buttons.back().setVisible(false);
 buttons.back().setEnabled(false);
 
 // === כפתור Block Tax ===
-buttons.emplace_back(font, "Block Tax", sf::Vector2f(300, 430.f), sf::Vector2f(150, 50), [this]() {
-    selectingCoupTarget = true;
-    targetButtons.clear();
-    Player* governor = getCurrentPlayer();
-    if (!governor || governor->role() != "Governor" || !governor->is_active()) return;
+    // === כפתור Block Tax ===
+    buttons.emplace_back(font, "Block Tax", sf::Vector2f(300, 430.f), sf::Vector2f(150, 50), [this]() {
+        Player* governor = getCurrentPlayer();
+        Player* taxed = this->game.get_tax_target();
 
-    float x = 100.f;
-    float y = 540.f;
-    for (Player* target : players) {
-        if (target->is_active() && target != governor && target->get_last_action() == "tax") {
-            targetButtons.emplace_back(this->font, target->name(), sf::Vector2f(x, y), sf::Vector2f(100, 30),
-                [this, governor, target]() {
-                    try {
-                        auto* realGov = dynamic_cast<Governor*>(governor);
-                        if (!realGov) throw std::runtime_error("Invalid governor cast.");
-                        realGov->undo(*target);
-                        selectingCoupTarget = false;
-                        updateTextEntries();
-                        this->game.next_turn();
-                        setTurn(this->game.turn());
-                        updateButtonStates();
-                    } catch (const std::exception& e) {
-                        std::cerr << "BlockTax error: " << e.what() << std::endl;
-                        selectingCoupTarget = false;
-                    }
-                });
-            x += 120;
+        std::cout << "[DEBUG] Block Tax button pressed by: " << (governor ? governor->name() : "null") << std::endl;
+        std::cout << "[DEBUG] Taxed target: " << (taxed ? taxed->name() : "null") << std::endl;
+
+        if (!governor || governor->role() != "Governor" || !governor->is_active()) {
+            std::cout << "[DEBUG] Governor is invalid or inactive.\n";
+            return;
         }
+
+        if (!taxed || !taxed->is_active()) {
+            std::cout << "[DEBUG] Taxed player is invalid or inactive.\n";
+            return;
+        }
+
+        std::cout << "[DEBUG] Taxed player's last action: " << taxed->get_last_action() << std::endl;
+
+        if (taxed->get_last_action() != "tax") {
+            std::cout << "[DEBUG] Taxed player did not perform tax.\n";
+            return;
+        }
+
+        try {
+    auto* realGov = dynamic_cast<Governor*>(governor);
+    if (!realGov) {
+        std::cerr << "Invalid governor cast.\n";
+        return;
     }
 
-    if (targetButtons.empty()) {
-        selectingCoupTarget = false;
-    }
-});
-buttons.back().setVisible(false);
-buttons.back().setEnabled(false);
+    std::cout << "[DEBUG] Calling realGov->block_tax()\n";
+    realGov->block_tax(*taxed);
+
+    this->game.set_awaiting_tax_block(false);  // ⬅️ מוודא שלא יהיה ניסיון נוסף
+    updateTextEntries();
+    setTurn(this->game.turn());
+    updateButtonStates();  // ⬅️ מכבה את הכפתור
+} catch (const std::exception& e) {
+    std::cerr << "BlockTax error: " << e.what() << std::endl;
+}
+
+
+    });
+
+
+
+
+
+    // === כפתור Skip Tax Block ===
+    buttons.emplace_back(font, "Skip Tax Block", sf::Vector2f(300, 490.f), sf::Vector2f(150, 50), [this, &game]() {
+        Player* gov = getCurrentPlayer();
+        if (!gov || gov->role() != "Governor") return;
+
+        Governor* realGov = dynamic_cast<Governor*>(gov);
+        if (!realGov) return;
+
+        realGov->skip_tax_block();
+        setTurn(game.turn());
+    });
+
+
 
 // === כפתור Reveal Coins – מציג כמה מטבעות יש לשחקן אחר ===
 buttons.emplace_back(font, "Reveal Coins", sf::Vector2f(980, 430.f), sf::Vector2f(150, 50), [this]() {
@@ -475,6 +502,19 @@ void GameRenderer::updateButtonStates() {
     for (auto& btn : buttons) {
         const std::string& label = btn.getLabel();
 
+        // מצב מיוחד: נציב בתור חסימת tax
+        if (game.is_awaiting_tax_block()) {
+            if (current->role() == "Governor") {
+                bool show = (label == "Block Tax" || label == "Skip Tax Block");
+                btn.setVisible(show);
+                btn.setEnabled(show);
+            } else {
+                btn.setVisible(false);  // שאר השחקנים לא רואים כפתורים
+            }
+            continue;
+        }
+
+
         // מצב מיוחד: שופט בתור חסימת שוחד
         if (game.is_awaiting_bribe_block()) {
             if (current->role() == "Judge") {
@@ -506,6 +546,11 @@ void GameRenderer::updateButtonStates() {
             btn.setVisible(false);
             continue;
         }
+        if ((label == "Block Tax" || label == "Skip Tax Block") && !game.is_awaiting_tax_block()) {
+            btn.setVisible(false);
+            continue;
+        }
+
         if ((label == "Block Coup" || label == "Skip Coup Block") && !game.is_awaiting_coup_block()) {
             btn.setVisible(false);
             continue;

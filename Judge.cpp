@@ -14,7 +14,7 @@ namespace coup {
         if (target.get_last_action() != "bribe") throw runtime_error("Target did not perform bribe.");
 
         // ביטול תור הבונוס
-        target.use_bonus_turn();  // או: target.give_bonus_turns(-1);
+        target.use_bonus_turn();
 
         // מחיקת הפעולה
         target.clear_last_action();
@@ -23,9 +23,16 @@ namespace coup {
         game.set_awaiting_bribe_block(false);
         game.set_bribing_player(nullptr);
 
-        // החזרת התור לשחקן
-        game.set_turn_to(&target);  // חשוב שמימשת set_turn_to ב-Game
+        // מצא את התור הבא אחרי המשחד
+        int index = game.get_player_index(&target);
+        const auto& players = game.get_all_players();
+        do {
+            index = (index + 1) % players.size();
+        } while (!players[index]->is_active());
+
+        game.set_turn_to(players[index]);
     }
+
 
 
     void Judge::on_sanctioned(Player& attacker) {

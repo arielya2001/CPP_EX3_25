@@ -114,6 +114,7 @@ namespace coup {
     }
 
     void Game::set_turn_to(Player* player) {
+        std::cout << "[DEBUG] Game::set_turn_to called for: " << player->name() << std::endl;
         for (size_t i = 0; i < players_list.size(); ++i) {
             if (players_list[i] == player) {
                 turn_index = i;
@@ -135,5 +136,23 @@ namespace coup {
         coup_attacker = nullptr;
         awaiting_coup_block = false;
     }
+
+    void Game::init_tax_blockers(Player* initiator) {
+        tax_blockers_queue.clear();
+        for (Player* p : players_list) {
+            if (p->is_active() && p->role() == "Governor" && p != initiator) {
+                tax_blockers_queue.push_back(p);
+            }
+        }
+    }
+
+    Player* Game::pop_next_tax_blocker() {
+        if (tax_blockers_queue.empty()) return nullptr;
+        Player* next = tax_blockers_queue.front();
+        tax_blockers_queue.pop_front();
+        return next;
+    }
+
+
 
 } // namespace coup

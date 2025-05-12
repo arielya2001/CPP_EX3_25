@@ -36,8 +36,23 @@ namespace coup {
 
         add_coins(2);
         last_action = "tax";
+
+        for (Player* p : game.get_all_players()) {
+            if (p->is_active() && p->role() == "Governor" && p != this) {
+                game.set_last_tax_index_if_needed(game.get_player_index(this));  // ✅ רק אם זו חסימה חדשה
+                game.init_tax_blockers(this);
+                game.set_awaiting_tax_block(true);
+                game.set_tax_target(this);
+                game.set_tax_source(p);
+                game.set_turn_to(p);
+                return;
+            }
+        }
+
         game.next_turn();
     }
+
+
 
 
 

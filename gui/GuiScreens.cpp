@@ -25,6 +25,55 @@
 
 namespace coup
 {
+    std::string popupSelectRole(sf::RenderWindow& parentWindow, sf::Font& font) {
+        sf::RenderWindow popup(sf::VideoMode(600, 400), "Choose Role", sf::Style::Titlebar | sf::Style::Close);
+
+        std::vector<std::string> roles = {
+            "Governor", "Spy", "Baron", "General", "Judge", "Merchant"
+        };
+
+        sf::Text title("Choose Role", font, 36);
+        title.setFillColor(sf::Color::White);
+        title.setPosition(180, 20);
+
+        while (popup.isOpen()) {
+            sf::Event event;
+            while (popup.pollEvent(event)) {
+                if (event.type == sf::Event::Closed) return "";
+
+                if (event.type == sf::Event::MouseButtonPressed) {
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(popup);
+                    for (size_t i = 0; i < roles.size(); ++i) {
+                        sf::FloatRect box(100, 80 + i * 50, 400, 40);
+                        if (box.contains((float)mousePos.x, (float)mousePos.y)) {
+                            popup.close();
+                            return roles[i];
+                        }
+                    }
+                }
+            }
+
+            popup.clear(sf::Color(40, 40, 40));
+            popup.draw(title);
+
+            for (size_t i = 0; i < roles.size(); ++i) {
+                sf::RectangleShape box(sf::Vector2f(400, 40));
+                box.setFillColor(sf::Color(70, 120, 200));
+                box.setPosition(100, 80 + i * 50);
+                popup.draw(box);
+
+                sf::Text roleText(roles[i], font, 28);
+                roleText.setFillColor(sf::Color::White);
+                roleText.setPosition(120, 85 + i * 50);
+                popup.draw(roleText);
+            }
+
+            popup.display();
+        }
+
+        return "";
+    }
+    // THIS IS ONLY FOR TEST AND WHEN YOU WANT TO CHOOSE MANUALLY!!!
     std::string popupSelectTarget(sf::RenderWindow& parentWindow, const std::vector<Player*>& players, sf::Font& font) {
         sf::RenderWindow popup(sf::VideoMode(600, 400), "Select Target", sf::Style::Titlebar | sf::Style::Close);
         sf::Text title("Select a Player", font, 36);
@@ -398,8 +447,13 @@ bool runAddPlayersScreen(Game& game) {
 
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
                 if (currentPlayerIndex < players.size()) {
-                    std::uniform_int_distribution<> dis(0, roleNames.size() - 1);
-                    std::string role = roleNames[dis(gen)];
+                    //std::uniform_int_distribution<> dis(0, roleNames.size() - 1);
+                    //std::string role = roleNames[dis(gen)];
+                    // THIS IS ONLY FOR TEST AND WHEN YOU WANT TO CHOOSE MANUALLY!!!
+                    std::string selectedRole = popupSelectRole(window, font); // פונקציה שתיצור popup לבחירת תפקיד
+                    std::string role = selectedRole; // ולא אקראי
+                    // THIS IS ONLY FOR TEST AND WHEN YOU WANT TO CHOOSE MANUALLY!!!
+
                     std::string name = players[currentPlayerIndex]->name();
 
                     Player* newPlayer = nullptr;
