@@ -24,12 +24,7 @@ namespace coup {
         Player* tax_source = nullptr;
 
         int last_tax_index = -1;
-        std::deque<Player*> tax_blockers_queue;  // ⬅️ חדש
-
-
-
-
-
+        std::deque<Player*> tax_blockers_queue;
 
     public:
         Game();
@@ -84,13 +79,6 @@ namespace coup {
 
         void init_tax_blockers(Player* initiator);
         Player* pop_next_tax_blocker();
-
-
-
-
-
-
-
 
 
 
