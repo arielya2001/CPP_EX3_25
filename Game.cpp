@@ -62,6 +62,7 @@ namespace coup {
             current->use_bonus_turn();
             total_turns++;
             std::cout << "[Debug] Bonus turn used. Total turns: " << total_turns << std::endl;
+            current->on_turn_start();  // Reset גם בתור בונוס
             return;
         }
 
@@ -75,6 +76,7 @@ namespace coup {
             if (bribing_player && bribing_player->is_active()) {
                 turn_index = get_player_index(bribing_player);
                 bribing_player = nullptr;
+                players_list[turn_index]->on_turn_start();
                 return;
             }
         }
@@ -83,6 +85,7 @@ namespace coup {
             awaiting_coup_block = false;
             if (coup_attacker && coup_attacker->is_active()) {
                 turn_index = get_player_index(coup_attacker);
+                players_list[turn_index]->on_turn_start();
                 return;
             }
         }
@@ -92,7 +95,9 @@ namespace coup {
         } while (!players_list[turn_index]->is_active());
 
         std::cout << "[Debug] Next turn: " << players_list[turn_index]->name() << std::endl;
+        players_list[turn_index]->on_turn_start();  // ✅ הוספה חשובה
     }
+
 
     const std::vector<Player*>& Game::get_all_players() const {
         return players_list;

@@ -36,10 +36,12 @@ void game1() {
 
     g.tax(); print_status(game);
     s.tax(); print_status(game);
-    b.tax(); print_status(game);
+    g.block_tax(s); print_status(game);
 
+    b.gather(); print_status(game);
     g.tax(); print_status(game);
-    s.tax(); print_status(game);
+    s.gather(); print_status(game);
+
     b.tax(); print_status(game);
 
     g.bribe(s); print_status(game);
@@ -55,10 +57,26 @@ void game1() {
         cout << "[Error] " << g.name() << ": " << e.what() << endl;
     }
 
+
     g.coup(b); print_status(game);
     s.tax(); print_status(game);
+    g.block_tax(s); print_status(game);
+
     g.tax(); print_status(game);
-    s.coup(g); print_status(game);
+    s.arrest(g); print_status(game);
+
+    g.arrest(s); print_status(game);
+    s.gather(); print_status(game);
+
+    g.tax(); print_status(game);
+    s.gather(); print_status(game);
+
+    g.gather(); print_status(game);
+    s.gather(); print_status(game);
+
+
+
+    g.coup(s); print_status(game);
 
     cout << "\n🏆 Winner: " << game.winner() << endl;
 }
@@ -82,23 +100,35 @@ void game2() {
     gov.gather(); print_status(game);
     spidy.gather(); print_status(game);
 
-
+    std::cout << "[Debug] Current turn: " << game.turn() << std::endl;
     bar.tax(); print_status(game);
+    std::cout << "[Debug] Current turn: " << game.turn() << std::endl;
+    gov.skip_tax_block(); print_status(game);
+    std::cout << "[Debug] Current turn: " << game.turn() << std::endl;
     merch.tax(); print_status(game);
+    std::cout << "[Debug] Current turn: " << game.turn() << std::endl;
+
+    gov.skip_tax_block(); print_status(game);
     gov.tax(); print_status(game);
     spidy.tax(); print_status(game);
+    gov.skip_tax_block(); print_status(game);
 
     bar.invest(); print_status(game);
     merch.tax(); print_status(game);
+    gov.skip_tax_block(); print_status(game);
     gov.tax(); print_status(game);
     spidy.tax(); print_status(game);
+    gov.skip_tax_block(); print_status(game);
 
     bar.tax(); print_status(game); //8
+    gov.skip_tax_block(); print_status(game);
     merch.tax(); print_status(game);
+    gov.skip_tax_block(); print_status(game);
     gov.undo(spidy); print_status(game);
     spidy.spy_on(bar); print_status(game);
     spidy.block_arrest(bar); print_status(game);
     spidy.tax(); print_status(game);
+    gov.skip_tax_block(); print_status(game);
     try {
         bar.arrest(merch); print_status(game);
     } catch (const exception& e) {
@@ -112,6 +142,7 @@ void game2() {
 
     bar.tax(); print_status(game);
     merch.tax(); print_status(game);
+
 
     bar.tax(); print_status(game);
     merch.tax(); print_status(game);
