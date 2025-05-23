@@ -62,7 +62,7 @@ namespace coup {
             current->use_bonus_turn();
             total_turns++;
             std::cout << "[Debug] Bonus turn used. Total turns: " << total_turns << std::endl;
-            current->on_turn_start();  // Reset גם בתור בונוס
+            current->on_turn_start();
             return;
         }
 
@@ -95,7 +95,7 @@ namespace coup {
         } while (!players_list[turn_index]->is_active());
 
         std::cout << "[Debug] Next turn: " << players_list[turn_index]->name() << std::endl;
-        players_list[turn_index]->on_turn_start();  // ✅ הוספה חשובה
+        players_list[turn_index]->on_turn_start();
     }
 
 
@@ -123,6 +123,7 @@ namespace coup {
         for (size_t i = 0; i < players_list.size(); ++i) {
             if (players_list[i] == player) {
                 turn_index = i;
+                players_list[i]->on_turn_start();
                 return;
             }
         }
@@ -150,6 +151,18 @@ namespace coup {
             }
         }
     }
+    void Game::init_bribe_blockers(Player* briber) {
+        bribe_blockers_queue.clear();
+        std::cout << "[DEBUG] Initializing bribe blockers:\n";
+        for (Player* p : players_list) {
+            if (p->is_active() && p->role() == "Judge" && p != briber) {
+                std::cout << "- " << p->name() << " added to bribe queue.\n";
+                bribe_blockers_queue.push_back(p);
+            }
+        }
+    }
+
+
 
     Player* Game::pop_next_tax_blocker() {
         if (tax_blockers_queue.empty()) return nullptr;
@@ -157,6 +170,36 @@ namespace coup {
         tax_blockers_queue.pop_front();
         return next;
     }
+    Player* Game::pop_next_bribe_blocker() {
+        if (bribe_blockers_queue.empty()) return nullptr;
+        Player* next = bribe_blockers_queue.front();
+        bribe_blockers_queue.pop_front();
+        return next;
+    }
+
+    void Game::advance_bribe_block_queue() {
+        // מוציא את השופט הבא מהתור (אם יש)
+        Player* nextJudge = pop_next_bribe_blocker();
+
+        if (nextJudge) {
+            // אם יש עוד שופט - מעביר אליו את התור
+            set_turn_to(nextJudge);
+        } else {
+            // אם אין יותר שופטים - מבטל את מצב השוחד
+            set_awaiting_bribe_block(false);
+
+            // שומר את המשחד
+            Player* briber = get_bribing_player();
+            set_bribing_player(nullptr);
+
+            // מחזיר את התור למשחד אם הוא עדיין חי
+            if (briber && briber->is_active()) {
+                set_turn_to(briber);
+            }
+        }
+    }
+
+
 
 
 

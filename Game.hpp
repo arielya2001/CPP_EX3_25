@@ -25,6 +25,7 @@ namespace coup {
 
         int last_tax_index = -1;
         std::deque<Player*> tax_blockers_queue;
+        std::deque<Player*> bribe_blockers_queue;
 
     public:
         Game();
@@ -78,7 +79,10 @@ namespace coup {
         }
 
         void init_tax_blockers(Player* initiator);
+        void init_bribe_blockers(Player* briber);
+        void advance_bribe_block_queue();
         Player* pop_next_tax_blocker();
+        Player* pop_next_bribe_blocker();
 
 
 

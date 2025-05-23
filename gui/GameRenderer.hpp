@@ -22,6 +22,7 @@ namespace coup {
         sf::Font& font;
         std::vector<sf::Text> playerTexts;
         sf::Text turnText;
+        sf::Text infoText;
         std::vector<ActionButton> buttons;
         std::vector<ActionButton> targetButtons; // כפתורי בחירה ל-Coup
         std::vector<Player*> players;

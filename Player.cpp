@@ -1,4 +1,3 @@
-
 #include "Player.hpp"
 #include "Spy.hpp"
 #include "Baron.hpp"
@@ -14,7 +13,8 @@ namespace coup {
 
     Player::Player(Game& game, const string& name, const string& role)
         : game(game), player_name(name), role_name(role), coin_count(0), active(true),
-          was_arrested_last(false), gather_blocked(false), sanctioned(false), bonus_turns(0) {
+          was_arrested_last(false), gather_blocked(false), sanctioned(false), bonus_turns(0),last_arrested_target(nullptr)
+ {
     }
 
     void Player::gather() {
@@ -23,8 +23,10 @@ namespace coup {
         if (coin_count >= 10) throw runtime_error("Must perform coup with 10 coins.");
         if (sanctioned) throw runtime_error("You are sanctioned and cannot gather.");
 
+        last_arrested_target = nullptr;
         add_coins(1);
         last_action = "gather";
+        std::cout << "[Debug] Player " << name() << " performed gather.\n";
         game.next_turn();
     }
 
@@ -48,6 +50,7 @@ namespace coup {
                 return;
             }
         }
+        last_arrested_target = nullptr;
 
         game.next_turn();
     }
@@ -56,38 +59,33 @@ namespace coup {
 
 
 
-    void Player::bribe(Player& target) {
+    void Player::bribe() {
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count < 4) throw runtime_error("Not enough coins for bribe.");
 
         deduct_coins(4);
-
-        // אם היעד הוא Merchant – הוא מקבל מטבע
-        Merchant* merchant = dynamic_cast<Merchant*>(&target);
-        if (merchant != nullptr && merchant->is_active()) {
-            merchant->on_bribed_by(*this);
-        }
-
-        bonus_turns += 1;  // ניתן תור בונוס, יבוטל אם השופט יחסום
+        bonus_turns += 1;
         last_action = "bribe";
 
         game.set_awaiting_bribe_block(true);
         game.set_bribing_player(this);
+        game.init_bribe_blockers(this);  // ⬅️ זה כבר יוצר את התור כמו שצריך
 
-        // חפש שופט חי – אם קיים, העבר אליו את התור
-        for (Player* p : game.get_all_players()) {
-            if (p->is_active() && p->role() == "Judge") {
-                game.set_turn_to(p);
-                return;
-            }
+        Player* nextJudge = game.pop_next_bribe_blocker();  // ⬅️ פה נשתמש בתור האמיתי
+        if (nextJudge) {
+            game.set_turn_to(nextJudge);  // ⬅️ התחלת תור חסימות
+            return;
         }
-
-        // אם אין שופט – לא ניתן לבטל, ממשיכים ישירות לבונוס של המשחד
+        last_arrested_target = nullptr;
+        // אם אין אף שופט – הפעולה נכנסת לתוקף מייד
         game.set_awaiting_bribe_block(false);
         game.set_bribing_player(nullptr);
-        game.set_turn_to(this);  // תור חוזר למשחד
+        game.set_turn_to(this);  // חוזר למשחד
     }
+
+
+
 
 
 
@@ -101,6 +99,14 @@ namespace coup {
         if (!target.is_active()) {
             throw runtime_error("Target player is not active.");
         }
+
+        std::cout << "[Debug] arrest: " << name()
+          << " wants to arrest " << target.name()
+          << " [last_arrested_target="
+          << (last_arrested_target ? last_arrested_target->name() : "nullptr")
+          << "]" << std::endl;
+
+
         if (last_arrested_target == &target) {
             throw runtime_error("Cannot arrest the same player twice in a row.");
         }
@@ -113,23 +119,30 @@ namespace coup {
             }
         }
 
+        // ביצוע
         if (Merchant* merchant = dynamic_cast<Merchant*>(&target)) {
             merchant->deduct_coins(2);
             std::cout << merchant->name() << " paid 2 coins due to arrest (Merchant penalty).\n";
         } else {
             target.deduct_coins(1);
             this->add_coins(1);
+
             if (General* general = dynamic_cast<General*>(&target)) {
                 general->refund_arrest_coin();
                 this->deduct_coins(1);
                 std::cout << general->name() << " refunded coin due to arrest (General ability).\n";
             }
         }
-        // עדכון מצב
-        last_arrested_target = &target;  // שומר מי נעצר על ידי
+
+        last_arrested_target = &target;
         last_action = "arrest";
+
+        std::cout << "[Debug] arrest complete: " << name()
+                  << " arrested " << target.name() << std::endl;
+
         game.next_turn();
     }
+
 
 
 
@@ -167,7 +180,7 @@ namespace coup {
         if (Baron* baron = dynamic_cast<Baron*>(&target)) {
             baron->receive_sanction_penalty();
         }
-
+        last_arrested_target = nullptr;
         last_action = "sanction";
         game.next_turn();
     }
@@ -193,7 +206,7 @@ namespace coup {
                 return;
             }
         }
-
+        last_arrested_target = nullptr;
         // אם אין גנרל חי – מבצעים הפיכה רגילה
         target.set_couped(true);
         target.deactivate();
@@ -205,9 +218,11 @@ namespace coup {
     void Player::on_turn_start() {
         was_arrested_last = false;
         gather_blocked = false;
-        last_arrested_target = nullptr;
+        // std::cout << "[Debug] on_turn_start for " << name()
+        //              << " [this=" << this << "]"
+        //              << (last_arrested_target ? " (clearing arrest target)" : "") << std::endl;
+        // last_arrested_target = nullptr;
     }
-
 
 
 

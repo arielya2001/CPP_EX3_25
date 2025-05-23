@@ -77,7 +77,8 @@ run: $(TARGET)
 
 run-gui: $(GUI_TARGET)
 	./$(GUI_TARGET)
-
+valgrind: test
+	valgrind --leak-check=full --track-origins=yes ./$(TEST_TARGET)
 
 
 clean:

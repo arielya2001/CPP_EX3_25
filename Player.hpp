@@ -27,7 +27,7 @@ namespace coup {
         // פעולות בסיסיות
         virtual void gather();
         virtual void tax();
-        virtual void bribe(Player& target);
+        virtual void bribe();
         virtual void arrest(Player& target);
         virtual void sanction(Player& target);
         virtual void coup(Player& target);
