@@ -44,7 +44,7 @@ void game1() {
 
     b.tax(); print_status(game);
 
-    g.bribe(s); print_status(game);
+    g.bribe(); print_status(game);
     g.arrest(s); print_status(game);
     g.tax(); print_status(game);
 

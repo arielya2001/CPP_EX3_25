@@ -4,6 +4,7 @@
 #include "General.hpp"
 #include "Judge.hpp"
 #include "Merchant.hpp"
+#include "Game.hpp"
 #include <stdexcept>
 #include <iostream>
 
@@ -18,6 +19,9 @@ namespace coup {
     }
 
     void Player::gather() {
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count >= 10) throw runtime_error("Must perform coup with 10 coins.");
@@ -31,10 +35,14 @@ namespace coup {
     }
 
     void Player::tax() {
-        if (!active) throw runtime_error("Inactive player cannot play.");
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
+        if (!active) throw runtime_error("Inactive player cannot act.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count >= 10) throw runtime_error("Must perform coup with 10 coins.");
-        if (sanctioned) throw runtime_error("You are sanctioned and cannot tax.");
+        if (sanctioned) throw runtime_error("You are under sanction and cannot tax.");
+
 
         add_coins(2);
         last_action = "tax";
@@ -60,6 +68,9 @@ namespace coup {
 
 
     void Player::bribe() {
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coin_count < 4) throw runtime_error("Not enough coins for bribe.");
@@ -90,6 +101,9 @@ namespace coup {
 
 
     void Player::arrest(Player& target) {
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
         if (!active) {
             throw runtime_error("Inactive player cannot play.");
         }
@@ -100,12 +114,12 @@ namespace coup {
             throw runtime_error("Target player is not active.");
         }
 
-        std::cout << "[Debug] arrest: " << name()
-          << " wants to arrest " << target.name()
-          << " [last_arrested_target="
-          << (last_arrested_target ? last_arrested_target->name() : "nullptr")
-          << "]" << std::endl;
 
+        std::cout << "[Debug] arrest: " << name()
+                      << " wants to arrest " << target.name()
+                      << " [last_arrested_target="
+                      << (last_arrested_target ? last_arrested_target->name() : "nullptr")
+                      << "], bonus_turns=" << bonus_turns << std::endl;
 
         if (last_arrested_target == &target) {
             throw runtime_error("Cannot arrest the same player twice in a row.");
@@ -138,7 +152,8 @@ namespace coup {
         last_action = "arrest";
 
         std::cout << "[Debug] arrest complete: " << name()
-                  << " arrested " << target.name() << std::endl;
+                      << " arrested " << target.name()
+                      << ", bonus_turns=" << bonus_turns << std::endl;
 
         game.next_turn();
     }
@@ -150,6 +165,9 @@ namespace coup {
 
 
     void Player::sanction(Player& target) {
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (!target.is_active()) throw runtime_error("Target player is not active.");
@@ -188,10 +206,14 @@ namespace coup {
 
 
     void Player::coup(Player& target) {
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
         if (!active) throw runtime_error("Inactive player cannot play.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (!target.is_active()) throw runtime_error("Target already out.");
         if (coin_count < 7) throw runtime_error("Not enough coins to perform coup.");
+
 
         deduct_coins(7);
         last_action = "coup";
@@ -221,7 +243,7 @@ namespace coup {
         // std::cout << "[Debug] on_turn_start for " << name()
         //              << " [this=" << this << "]"
         //              << (last_arrested_target ? " (clearing arrest target)" : "") << std::endl;
-        // last_arrested_target = nullptr;
+        //last_arrested_target = nullptr;
     }
 
 

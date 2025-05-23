@@ -9,9 +9,13 @@ namespace coup {
         : Player(game, name, "Judge") {}
 
     void Judge::block_bribe(Player& target) {
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
         if (!is_active()) throw runtime_error("Judge is not active.");
         if (!target.is_active()) throw runtime_error("Target is not active.");
         if (target.get_last_action() != "bribe") throw runtime_error("Target did not perform bribe.");
+
 
         // ביטול תור הבונוס
         target.use_bonus_turn();

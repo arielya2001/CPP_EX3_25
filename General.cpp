@@ -11,9 +11,13 @@ namespace coup {
         : Player(game, name, "General") {}
 
     void General::protect_from_coup(Player& target) {
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
         if (!is_active()) throw runtime_error("General is not active.");
         if (!target.is_active()) throw runtime_error("Target is not active.");
         if (coins() < 5) throw runtime_error("Not enough coins to protect.");
+
 
         deduct_coins(5);
         protected_players.insert(&target);

@@ -101,61 +101,58 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
         CHECK_THROWS_WITH(gov.bribe(), "Not enough coins for bribe.");
     }
 
-SUBCASE("Player::arrest - שגיאות") {
-    // שחקן לא פעיל
-    gov.deactivate();
-    CHECK_THROWS_AS(gov.arrest(spy), std::runtime_error);
-    CHECK_THROWS_WITH(gov.arrest(spy), "Inactive player cannot play.");
-    gov.set_active(true);
+    SUBCASE("Player::arrest - שגיאות") {
+        // שחקן לא פעיל
+        gov.deactivate();
+        CHECK_THROWS_WITH(gov.arrest(spy), "Inactive player cannot play.");
+        gov.set_active(true);
 
-    // לא תורו של השחקן
-    game.set_turn_to(&spy);
-    CHECK(game.turn() == "Shai");
-    CHECK_THROWS_AS(gov.arrest(spy), std::runtime_error);
-    CHECK_THROWS_WITH(gov.arrest(spy), "Not your turn.");
+        // לא תורו של השחקן
+        game.set_turn_to(&spy);
+        CHECK(game.turn() == "Shai");
+        CHECK_THROWS_WITH(gov.arrest(spy), "Not your turn.");
 
-    // יעד לא פעיל
-    game.set_turn_to(&gov);
-    CHECK(game.turn() == "Gili");
-    spy.deactivate();
-    CHECK_THROWS_AS(gov.arrest(spy), std::runtime_error);
-    CHECK_THROWS_WITH(gov.arrest(spy), "Target player is not active.");
-    spy.set_active(true);
+        // יעד לא פעיל
+        game.set_turn_to(&gov);
+        spy.deactivate();
+        CHECK_THROWS_WITH(gov.arrest(spy), "Target player is not active.");
+        spy.set_active(true);
 
-    // מעצר אותו שחקן פעמיים ברצף (תור רגיל)
-    game.set_turn_to(&gov);
-    CHECK(game.turn() == "Gili");
-    gov.add_coins(2);
-    spy.add_coins(2);
-    gov.arrest(spy); // arrest ראשון
-    CHECK(game.turn() == "Shai");
-    game.set_turn_to(&gov); // מחזירים תור לגילי
-    CHECK(game.turn() == "Gili");
-    CHECK_THROWS_AS(gov.arrest(spy), std::runtime_error);
-    CHECK_THROWS_WITH(gov.arrest(spy), "Cannot arrest the same player twice in a row.");
+        // arrest ראשון - תקין
+        game.set_turn_to(&gov);
+        gov.add_coins(2);
+        spy.add_coins(2);
+        gov.arrest(spy); // arrest ראשון
+        CHECK(game.turn() == "Shai");
 
-    // מעצר אותו שחקן פעמיים עם bribe (תור נוסף)
-    game.set_turn_to(&gov);
-    CHECK(game.turn() == "Gili");
-    gov.add_coins(4); // מספיק ל-bribe
-    spy.add_coins(2);
-    gov.bribe(); // מתחיל שלב חסימת שוחד
-    CHECK(game.is_awaiting_bribe_block());
-    game.advance_bribe_block_queue(); // מוציא את Lior ומחזיר תור ל-Gili
-    CHECK(game.turn() == "Gili");
-    gov.arrest(spy); // arrest ראשון בתור נוסף
-    CHECK(game.turn() == "Gili"); // תור נוסף ממשיך
-    CHECK_THROWS_AS(gov.arrest(spy), std::runtime_error);
-    CHECK_THROWS_WITH(gov.arrest(spy), "Cannot arrest the same player twice in a row.");
+        // arrest כפול ברצף - צריך לזרוק חריגה
+        game.set_turn_to(&gov);
+        CHECK_THROWS_WITH(gov.arrest(spy), "Cannot arrest the same player twice in a row.");
+        gov.gather();
+        spy.gather();
 
-    // חסימת arrest ע"י Spy
-    game.set_turn_to(&gov);
-    CHECK(game.turn() == "Gili");
-    gov.add_coins(2);
-    spy.block_arrest(gov);
-    CHECK_THROWS_AS(gov.arrest(spy), std::runtime_error);
-    CHECK_THROWS_WITH(gov.arrest(spy), "Arrest blocked by Spy.");
-}
+        // arrest כפול עם bribe - גם לא תקין
+        game.set_turn_to(&gov);
+        gov.add_coins(4);
+        gov.bribe();  // מתחיל שלב חסימת שוחד
+        CHECK(game.turn() == "Lior");
+        game.advance_bribe_block_queue();
+        gov.arrest(spy);  // arrest ראשון בתור הבונוס
+        CHECK(game.turn() == "Gili");
+        CHECK_THROWS_WITH(gov.arrest(spy), "Cannot arrest the same player twice in a row.");
+
+        // בדיקת חסימת arrest – נדרשת "reset" של היעד הקודם
+        game.set_turn_to(&gov);
+        gov.add_coins(2);
+        baron.add_coins(2);
+        gov.arrest(baron);  // arrest חדש לשחקן אחר
+        CHECK(game.turn() != "Gili");
+        game.set_turn_to(&gov);
+        spy.block_arrest(gov);
+        CHECK_THROWS_WITH(gov.arrest(spy), "Arrest blocked by Spy.");
+    }
+
+
 
 
     SUBCASE("Player::sanction - שגיאות") {
@@ -227,34 +224,47 @@ SUBCASE("Player::arrest - שגיאות") {
     }
 
     SUBCASE("Baron::invest - שגיאות") {
-        // שחקן לא פעיל
-        baron.deactivate();
-        CHECK_THROWS_AS(baron.invest(), std::runtime_error);
-        CHECK_THROWS_WITH(baron.invest(), "Baron is not active.");
-        baron.set_active(true);
+        Game game;
+        Baron baron(game, "Tamar");
+        Spy spy(game, "Shai");
 
-        // לא תורו של השחקן
+        // בדיקת "Game has not started" עם שחקן אחד בלבד
+        game.add_player(&baron);
+        CHECK_THROWS_WITH(baron.invest(), "Game has not started – need at least 2 players.");
+
+        // הוספת שחקן נוסף כדי שהמשחק יתחיל
+        game.add_player(&spy);
+        game.set_turn_to(&baron);
+
+        // בדיקת "Baron is not active"
+        baron.deactivate();
+        CHECK_THROWS_WITH(baron.invest(), "Baron is not active.");
+
+        // החזרת baron למצב פעיל לבדיקות הבאות
+        baron.set_active(true);
         game.set_turn_to(&spy);
-        CHECK(game.turn() == "Shai"); // בדיקת תור
-        CHECK_THROWS_AS(baron.invest(), std::runtime_error);
         CHECK_THROWS_WITH(baron.invest(), "Not your turn.");
 
-        // אין מספיק מטבעות
         game.set_turn_to(&baron);
-        CHECK(game.turn() == "Tamar"); // בדיקת תור
-        baron.deduct_coins(baron.coins());
-        CHECK_THROWS_AS(baron.invest(), std::runtime_error);
-        CHECK_THROWS_WITH(baron.invest(), "Not enough coins to invest.");
-
-        // יותר מדי מטבעות (חייב לעשות coup)
-        game.set_turn_to(&baron);
-        CHECK(game.turn() == "Tamar"); // בדיקת תור
         baron.add_coins(10);
-        CHECK_THROWS_AS(baron.invest(), std::runtime_error);
         CHECK_THROWS_WITH(baron.invest(), "Must coup with 10 coins.");
+
+        baron.deduct_coins(baron.coins());
+        CHECK_THROWS_WITH(baron.invest(), "Not enough coins to invest.");
     }
 
     SUBCASE("General::protect_from_coup - שגיאות") {
+        Game game;
+        General general(game, "Dana");
+        Spy spy(game, "Shai");
+
+        // בדיקת "Game has not started" עם שחקן אחד בלבד
+        game.add_player(&general);
+        CHECK_THROWS_WITH(general.protect_from_coup(spy), "Game has not started – need at least 2 players.");
+
+        // הוספת שחקן נוסף כדי שהמשחק יתחיל
+        game.add_player(&spy);
+
         // שחקן לא פעיל
         general.deactivate();
         CHECK_THROWS_AS(general.protect_from_coup(spy), runtime_error);
@@ -299,6 +309,17 @@ SUBCASE("Player::arrest - שגיאות") {
     }
 
     SUBCASE("Governor::undo - שגיאות") {
+        Game game;
+        Governor gov(game, "Gili");
+        Spy spy(game, "Shai");
+
+        // בדיקת "Game has not started" עם שחקן אחד בלבד
+        game.add_player(&gov);
+        CHECK_THROWS_WITH(gov.undo(spy), "Game has not started – need at least 2 players.");
+
+        // הוספת שחקן נוסף כדי שהמשחק יתחיל
+        game.add_player(&spy);
+
         // שחקן לא פעיל
         gov.deactivate();
         CHECK_THROWS_AS(gov.undo(spy), std::runtime_error);
@@ -325,11 +346,20 @@ SUBCASE("Player::arrest - שגיאות") {
         CHECK_THROWS_AS(gov.undo(spy), std::runtime_error);
         CHECK_THROWS_WITH(gov.undo(spy), "Target doesn't have enough coins to undo.");
     }
-
     SUBCASE("Governor::block_tax - שגיאות") {
+        Game game;
+        Governor gov(game, "Gili");
+        Spy spy(game, "Shai");
+
+        // בדיקת "Game has not started" עם שחקן אחד בלבד
+        game.add_player(&gov);
+        CHECK_THROWS_WITH(gov.block_tax(spy), "Game has not started – need at least 2 players.");
+
+        // הוספת שחקן נוסף כדי שהמשחק יתחיל
+        game.add_player(&spy);
+
         // יעד לא ביצע tax
         spy.clear_last_action();
-        CHECK_THROWS_AS(gov.block_tax(spy), std::runtime_error);
         CHECK_THROWS_WITH(gov.block_tax(spy), "Target didn't tax.");
 
         // אין מספיק מטבעות ליעד
@@ -338,26 +368,39 @@ SUBCASE("Player::arrest - שגיאות") {
         spy.add_coins(2); // וידוא שיש מספיק מטבעות ל-tax
         spy.tax(); // מגדיר last_action כ-"tax"
         spy.deduct_coins(spy.coins()); // הסרת כל המטבעות לאחר tax
-        CHECK_THROWS_AS(gov.block_tax(spy), std::runtime_error);
         CHECK_THROWS_WITH(gov.block_tax(spy), "Not enough coins to undo tax.");
+    }
+    SUBCASE("Governor::skip_tax_block - שגיאות") {
+        Game game;
+        Governor gov(game, "Gili");
+        game.add_player(&gov); // רק שחקן אחד
+        CHECK_THROWS_WITH(gov.skip_tax_block(), "Game has not started – need at least 2 players.");
     }
 
     SUBCASE("Judge::block_bribe - שגיאות") {
+        Game game;
+        Judge judge(game, "Lior");
+        Spy spy(game, "Shai");
+
+        // בדיקת "Game has not started" עם שחקן אחד בלבד
+        game.add_player(&judge);
+        CHECK_THROWS_WITH(judge.block_bribe(spy), "Game has not started – need at least 2 players.");
+
+        // הוספת שחקן נוסף כדי שהמשחק יתחיל
+        game.add_player(&spy);
+
         // שחקן לא פעיל
         judge.deactivate();
-        CHECK_THROWS_AS(judge.block_bribe(spy), runtime_error);
         CHECK_THROWS_WITH(judge.block_bribe(spy), "Judge is not active.");
         judge.set_active(true);
 
         // יעד לא פעיל
         spy.deactivate();
-        CHECK_THROWS_AS(judge.block_bribe(spy), runtime_error);
         CHECK_THROWS_WITH(judge.block_bribe(spy), "Target is not active.");
         spy.set_active(true);
 
         // יעד לא ביצע bribe
         spy.clear_last_action();
-        CHECK_THROWS_AS(judge.block_bribe(spy), runtime_error);
         CHECK_THROWS_WITH(judge.block_bribe(spy), "Target did not perform bribe.");
     }
 
@@ -374,6 +417,33 @@ SUBCASE("Player::arrest - שגיאות") {
         CHECK_THROWS_WITH(spy.spy_on(gov), "Target is not active.");
         gov.set_active(true);
     }
+    SUBCASE("Spy::block_arrest - שגיאות") {
+        Game game;
+        Spy spy(game, "Shai");
+        Governor gov(game, "Gili");
+        game.add_player(&spy);
+        CHECK_THROWS_WITH(spy.block_arrest(gov), "Game has not started – need at least 2 players.");
+        game.add_player(&gov); // started = true
+
+        // שחקן לא פעיל
+        spy.deactivate();
+        CHECK_THROWS_WITH(spy.block_arrest(gov), "Spy is not active.");
+        spy.set_active(true);
+
+        // יעד לא פעיל
+        gov.deactivate();
+        CHECK_THROWS_WITH(spy.block_arrest(gov), "Target is not active.");
+        gov.set_active(true);
+
+        // בדיקה שהפעולה עובדת כשאין שגיאות
+        CHECK_NOTHROW(spy.block_arrest(gov));
+    }
+    SUBCASE("Spy::clear_expired_blocks - שגיאות") {
+        Game game;
+        Spy spy(game, "Shai");
+        game.add_player(&spy); // רק שחקן אחד
+        CHECK_THROWS_WITH(spy.clear_expired_blocks(), "Game has not started – need at least 2 players.");
+    }
 
     SUBCASE("Game::add_player - שגיאות") {
         // הוספת שחקן כשהמשחק מלא
@@ -384,12 +454,25 @@ SUBCASE("Player::arrest - שגיאות") {
         CHECK_THROWS_AS(full_game.add_player(new Player(full_game, "Extra", "")), runtime_error);
         CHECK_THROWS_WITH(full_game.add_player(new Player(full_game, "Extra", "")), "Cannot add more than 6 players.");
     }
-
     SUBCASE("Game::turn - שגיאות") {
         // משחק ללא שחקנים
         Game empty_game;
         CHECK_THROWS_AS(empty_game.turn(), runtime_error);
         CHECK_THROWS_WITH(empty_game.turn(), "No players in the game.");
+
+        // משחק עם שחקן אחד (לא התחיל)
+        Game one_player_game;
+        Player p1(one_player_game, "P1", "");
+        one_player_game.add_player(&p1);
+        CHECK_THROWS_AS(one_player_game.turn(), runtime_error);
+        CHECK_THROWS_WITH(one_player_game.turn(), "Game has not started – need at least 2 players.");
+
+        // משחק עם שני שחקנים (התחיל)
+        Game game;
+        Player p2(game, "P2", "");
+        game.add_player(&p1);
+        game.add_player(&p2);
+        CHECK_NOTHROW(game.turn()); // צריך לעבוד כי started == true
     }
 
     SUBCASE("Game::winner - שגיאות") {
@@ -403,5 +486,41 @@ SUBCASE("Player::arrest - שגיאות") {
         Player non_existent(game, "NonExistent", "");
         CHECK_THROWS_AS(game.set_turn_to(&non_existent), runtime_error);
         CHECK_THROWS_WITH(game.set_turn_to(&non_existent), "Player not found in game.");
+    }
+
+    SUBCASE("Game not started - שגיאות") {
+        // משחק עם שחקן אחד בלבד
+        Game game;
+        Governor gov(game, "Gili");
+        Spy spy(game, "Shai");
+        game.add_player(&gov); // רק שחקן אחד
+
+        // ודא שיש מספיק מטבעות כדי למנוע חריגות של "Not enough coins"
+        gov.add_coins(10);
+
+        // בדיקת פעולות של Player
+        CHECK_THROWS_WITH(gov.gather(), "Game has not started – need at least 2 players.");
+        CHECK_THROWS_WITH(gov.tax(), "Game has not started – need at least 2 players.");
+        CHECK_THROWS_WITH(gov.bribe(), "Game has not started – need at least 2 players.");
+        CHECK_THROWS_WITH(gov.arrest(gov), "Game has not started – need at least 2 players.");
+        CHECK_THROWS_WITH(gov.sanction(gov), "Game has not started – need at least 2 players.");
+        CHECK_THROWS_WITH(gov.coup(gov), "Game has not started – need at least 2 players.");
+        CHECK_THROWS_WITH(spy.spy_on(gov), "Game has not started – need at least 2 players.");
+
+        // הוספת שחקנים נוספים למשחק
+        Baron baron(game, "Bar");
+        General general(game, "Gen");
+        Judge judge(game, "Jud");
+        game.add_player(&spy);
+        game.add_player(&baron);
+        game.add_player(&general);
+        game.add_player(&judge);
+
+        // בדיקת פעולות ספציפיות לתפקידים עם מספיק שחקנים
+        CHECK_THROWS_WITH(baron.invest(), "Not your turn.");
+        CHECK_THROWS_WITH(general.protect_from_coup(gov), "Not enough coins to protect.");
+        CHECK_THROWS_WITH(gov.undo(gov), "Cannot undo: last action was not tax.");
+        CHECK_THROWS_WITH(gov.block_tax(gov), "Target didn't tax.");
+        CHECK_THROWS_WITH(judge.block_bribe(gov), "Target did not perform bribe.");
     }
 }

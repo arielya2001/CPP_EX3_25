@@ -10,6 +10,9 @@ Governor::Governor(Game& game, const std::string& name)
     : Player(game, name, "Governor") {}
 
     void Governor::tax() {
+    if (game.num_players() < 2) {
+        throw runtime_error("Game has not started – need at least 2 players.");
+    }
     if (!is_active()) throw runtime_error("Inactive player cannot act.");
     if (game.turn() != name()) throw runtime_error("Not your turn.");
     if (coins() >= 10) throw runtime_error("Must perform coup with 10 coins.");
@@ -35,8 +38,12 @@ Governor::Governor(Game& game, const std::string& name)
 
 
 void Governor::undo(Player& target) {
+    if (game.num_players() < 2) {
+        throw runtime_error("Game has not started – need at least 2 players.");
+    }
     if (!is_active()) throw runtime_error("Governor is not active.");
     if (!target.is_active()) throw runtime_error("Target is not active.");
+
     if (target.get_last_action() != "tax") {
         throw runtime_error("Cannot undo: last action was not tax.");
     }
@@ -51,6 +58,9 @@ void Governor::undo(Player& target) {
 }
 
     void Governor::block_tax(Player& target) {
+    if (game.num_players() < 2) {
+        throw runtime_error("Game has not started – need at least 2 players.");
+    }
     if (!is_active() || !target.is_active()) return;
     if (target.get_last_action() != "tax") throw runtime_error("Target didn't tax.");
 
@@ -79,6 +89,10 @@ void Governor::undo(Player& target) {
 
 
     void Governor::skip_tax_block() {
+    if (game.num_players() < 2) {
+        throw runtime_error("Game has not started – need at least 2 players.");
+    }
+
     Player* next = game.pop_next_tax_blocker();
     if (next) {
         game.set_turn_to(next);

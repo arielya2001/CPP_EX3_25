@@ -9,10 +9,14 @@ namespace coup {
         : Player(game, name, "Baron") {}
 
     void Baron::invest() {
+        if (game.num_players() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
         if (!is_active()) throw runtime_error("Baron is not active.");
         if (game.turn() != name()) throw runtime_error("Not your turn.");
         if (coins() < 3) throw runtime_error("Not enough coins to invest.");
         if (coins() >= 10) throw runtime_error("Must coup with 10 coins.");
+
 
         deduct_coins(3);
         add_coins(6);

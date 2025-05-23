@@ -20,6 +20,9 @@ namespace coup {
         if (players_list.empty()) {
             throw runtime_error("No players in the game.");
         }
+        if (players_list.size() < 2) {
+            throw runtime_error("Game has not started – need at least 2 players.");
+        }
 
         size_t idx = turn_index % players_list.size();
         size_t tries = 0;
@@ -57,6 +60,8 @@ namespace coup {
 
     void Game::next_turn() {
         Player* current = players_list[turn_index];
+        std::cout << "[Debug] next_turn: current=" << current->name()
+              << ", bonus_turns=" << current->has_bonus_turn() << std::endl;
 
         if (current->has_bonus_turn()) {
             current->use_bonus_turn();
