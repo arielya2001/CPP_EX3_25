@@ -11,18 +11,20 @@ namespace coup {
         std::unordered_map<Player*, int> blocked_arrests;
 
     public:
+        /// Constructs a Spy player with a given name
         Spy(Game& game, const std::string& name);
 
-        // יכולת לרגל - מחזיר מספר מטבעות של שחקן אחר
+        /// Reveals how many coins a target player has
         int spy_on(Player& target) const;
 
-        // חסימת arrest - "מחסן" שחקן
+        /// Blocks arrest attempts against the target player
         void block_arrest(Player& target);
 
-        // פונקציה לבדיקה אם שחקן חסום (נשתמש מחוץ למחלקה הזו)
+        /// Checks if arrest attempts against the player are currently blocked
         bool is_arrest_blocked(Player* p) const;
-        void clear_expired_blocks();
 
+        /// Removes expired arrest blocks based on turn count
+        void clear_expired_blocks();
     };
 
 }

@@ -1,9 +1,8 @@
-#include <SFML/Graphics.hpp>
 #include "../Game.hpp"
-#include "GuiScreens.hpp"  // ודא שהקובץ הזה כולל את ההצהרות לפונקציות שלך
-#include <iostream>
+#include "GuiScreens.hpp"
 using namespace coup;
 
+// Entry point: Initializes the game and runs the sequence of GUI screens
 int main() {
     Game game;
 

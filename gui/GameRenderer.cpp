@@ -4,6 +4,7 @@
 
 namespace coup
 {
+    // Constructor: Initializes the renderer with a font and game, sets up UI elements and action buttons
     GameRenderer::GameRenderer(sf::Font& font, Game& game) : font(font), game(game), current_turn_name("") {
         turnText.setFont(font);
         turnText.setCharacterSize(32);
@@ -355,11 +356,13 @@ namespace coup
 
     }
 
+    // Sets the list of players and updates their text representations
     void GameRenderer::setPlayers(const std::vector<Player*>& playerList) {
         players = playerList;
         updateTextEntries();
     }
 
+    // Updates the text entries for each player, showing name, role, coins, and status
     void GameRenderer::updateTextEntries() {
         playerTexts.clear();
         float yOffset = 80;
@@ -393,6 +396,7 @@ namespace coup
     }
 
 
+    // Sets the current turn, updates turn text, and refreshes button states
     void GameRenderer::setTurn(const std::string& name) {
         if (name != current_turn_name) {
             current_turn_name = name;
@@ -404,6 +408,7 @@ namespace coup
     }
 
 
+    // Returns the player whose turn it is, or nullptr if not found
     Player* GameRenderer::getCurrentPlayer() {
         for (auto* p : players) {
             if (p->name() == game.turn()) return p;
@@ -411,6 +416,7 @@ namespace coup
         return nullptr;
     }
 
+    // Draws all UI elements (turn text, player texts, buttons, and info text) to the window
     void GameRenderer::draw(sf::RenderWindow& window) {
         window.draw(turnText);
         for (auto& txt : playerTexts) {
@@ -427,6 +433,7 @@ namespace coup
         window.draw(infoText);
     }
 
+    // Handles mouse clicks by passing them to the appropriate buttons
     void GameRenderer::handleClick(sf::Vector2f pos) {
         if (selectingCoupTarget) {
             for (auto& tbtn : targetButtons) {
@@ -438,6 +445,8 @@ namespace coup
             }
         }
     }
+
+    // Updates the visibility and enabled state of buttons based on game state and player role
     void GameRenderer::updateButtonStates() {
         Player* current = getCurrentPlayer();
         if (!current) return;

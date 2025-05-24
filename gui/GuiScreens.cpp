@@ -5,26 +5,17 @@
 #include <random>
 #include "../Game.hpp"
 #include "../Player.hpp"
-#include "../Game.hpp"
-#include "../Player.hpp"
 #include "../Governor.hpp"
 #include "../Spy.hpp"
 #include "../Baron.hpp"
 #include "../General.hpp"
 #include "../Judge.hpp"
 #include "../Merchant.hpp"
-
-#include <SFML/Graphics.hpp>
-#include <iostream>
-#include <vector>
-#include <string>
-#include <random>
 #include "GuiScreens.hpp"
-#include <SFML/Graphics.hpp>
-#include <iostream>
 
 namespace coup
 {
+    // Displays a popup window to select a player role and returns the chosen role
     std::string popupSelectRole(sf::RenderWindow& parentWindow, sf::Font& font) {
         sf::RenderWindow popup(sf::VideoMode(600, 400), "Choose Role", sf::Style::Titlebar | sf::Style::Close);
 
@@ -73,7 +64,8 @@ namespace coup
 
         return "";
     }
-    // THIS IS ONLY FOR TEST AND WHEN YOU WANT TO CHOOSE MANUALLY!!!
+
+    // Displays a popup window to select a target player and returns the chosen player's name
     std::string popupSelectTarget(sf::RenderWindow& parentWindow, const std::vector<Player*>& players, sf::Font& font) {
         sf::RenderWindow popup(sf::VideoMode(600, 400), "Select Target", sf::Style::Titlebar | sf::Style::Close);
         sf::Text title("Select a Player", font, 36);
@@ -113,6 +105,7 @@ namespace coup
         return "";
     }
 
+    // Displays a yes/no popup with a given question and returns true for "Yes" or false for "No"
     bool popupYesNo(sf::RenderWindow& parentWindow, sf::Font& font, const std::string& question) {
         sf::RenderWindow popup(sf::VideoMode(500, 200), "Need a target?", sf::Style::Titlebar | sf::Style::Close);
         sf::Text questionText(question, font, 28);
@@ -162,7 +155,8 @@ namespace coup
         return false;
     }
 
-bool runOpeningScreen() {
+    // Runs the opening screen with a start button, returning true if the game should start
+    bool runOpeningScreen() {
     sf::RenderWindow window(sf::VideoMode(1280, 720), "Coup Game");
 
     sf::Texture backgroundTexture;
@@ -236,10 +230,10 @@ bool runOpeningScreen() {
     }
 
     return true;
-}
+    }
 
-
-bool runAddPlayersScreen(Game& game) {
+    // Runs the screen for adding players, allowing name input and returning true if players are added successfully
+    bool runAddPlayersScreen(Game& game) {
     sf::RenderWindow window(sf::VideoMode(1280, 720), "Add Players");
 
     sf::Texture backgroundTexture;
@@ -384,9 +378,9 @@ bool runAddPlayersScreen(Game& game) {
     }
 
     return true;
-}
+    }
 
-
+    // Runs the screen for assigning roles to players, allowing role selection and returning true on completion
     bool runAssignRolesScreen(Game& game) {
     sf::RenderWindow window(sf::VideoMode(1280, 720), "Assign Roles");
 
@@ -521,10 +515,10 @@ bool runAddPlayersScreen(Game& game) {
     }
 
     return true;
-}
+    }
 
-
-void runGameLoopScreen(Game& game) {
+    // Runs the main game loop, handling user interactions and displaying the game state
+    void runGameLoopScreen(Game& game) {
     sf::RenderWindow window(sf::VideoMode(1280, 720), "Coup Game - GUI");
 
     sf::Texture backgroundTexture;
@@ -608,8 +602,6 @@ void runGameLoopScreen(Game& game) {
 
         window.display();
     }
+    }
+
 }
-
-
-}
-

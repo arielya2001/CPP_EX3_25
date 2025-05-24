@@ -6,12 +6,15 @@ namespace coup {
 
     class Merchant : public Player {
     public:
+        /// Constructor: initializes a Merchant player with the given name.
         Merchant(Game& game, const std::string& name);
 
-        // יקרא כאשר מישהו עושה עליו bribe
+        /// Called when another player performs a bribe on the Merchant.
         void on_bribed_by(Player& source);
-        void on_turn_start() override;
 
+        /// Called automatically at the start of the Merchant's turn.
+        /// Grants bonus coin if conditions are met.
+        void on_turn_start() override;
     };
 
 }

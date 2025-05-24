@@ -9,7 +9,8 @@ namespace coup {
 Governor::Governor(Game& game, const std::string& name)
     : Player(game, name, "Governor") {}
 
-    void Governor::tax() {
+/// Performs the 'tax' action: adds 3 coins and may trigger a tax block phase.
+void Governor::tax() {
     if (game.num_players() < 2) {
         throw runtime_error("Game has not started – need at least 2 players.");
     }
@@ -36,7 +37,7 @@ Governor::Governor(Game& game, const std::string& name)
     game.next_turn();
 }
 
-
+/// Undoes a tax action performed by another player (typically triggered by a Governor).
 void Governor::undo(Player& target) {
     if (game.num_players() < 2) {
         throw runtime_error("Game has not started – need at least 2 players.");
@@ -57,7 +58,8 @@ void Governor::undo(Player& target) {
     game.next_turn();
 }
 
-    void Governor::block_tax(Player& target) {
+/// Blocks a tax action, refunds coins from the target, and resumes turn order.
+void Governor::block_tax(Player& target) {
     if (game.num_players() < 2) {
         throw runtime_error("Game has not started – need at least 2 players.");
     }
@@ -82,13 +84,10 @@ void Governor::undo(Player& target) {
 
     game.set_turn_to(players[index]);
     game.set_turn_index(index);  // ← נשמור את המיקום החדש
-
 }
 
-
-
-
-    void Governor::skip_tax_block() {
+/// Skips current Governor's tax block and moves to next or resumes game.
+void Governor::skip_tax_block() {
     if (game.num_players() < 2) {
         throw runtime_error("Game has not started – need at least 2 players.");
     }
@@ -108,7 +107,5 @@ void Governor::undo(Player& target) {
         game.set_turn_index(index);  // ← נשמור את המיקום החדש
     }
 }
-
-
 
 }
