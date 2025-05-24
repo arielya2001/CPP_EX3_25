@@ -53,7 +53,7 @@ This project implements the board game *Coup* in C++ with two interfaces: a comm
 - Implements multiple GUI screens: opening screen, player addition, role assignment, and main game loop.
 - Uses popups for role selection, target selection, and yes/no prompts, enhancing user interaction.
 
-### Demo
+### Main
 - Provides a command-line interface for playing the game, demonstrating core mechanics without a graphical interface.
 - Used in `main.cpp` to run sample games and showcase game logic.
 
@@ -63,7 +63,7 @@ This project implements the board game *Coup* in C++ with two interfaces: a comm
 
 ## Features
 - **Dynamic Game Logic**: Supports 2–6 players with role-specific abilities and complex interactions (e.g., sanctions, bribe blocking).
-- **Dual Interfaces**: Offers both a command-line version (via `Demo.cpp`) and an interactive GUI (via `GuiScreens.cpp`).
+- **Dual Interfaces**: Offers both a command-line version (via `Main.cpp`) and an interactive GUI (via `GuiScreens.cpp`).
 - **Robust Error Handling**: Validates actions with exceptions for invalid turns, insufficient coins, or inactive players.
 - **Modular Design**: Separates game logic, rendering, and GUI screens for maintainability and extensibility.
 - **Customizable Roles**: Each role has unique actions, implemented via inheritance for flexibility.
@@ -76,14 +76,6 @@ Ensure SFML is installed for the GUI version and the following resources are in 
 - `resources/opening_screen.png`: Background image for GUI screens.
 
 Build and run the project using the provided Makefile commands:
-
-### Build and Run the Command-Line Game
-```
-make
-./coup_game
-```
-- Builds the command-line version using `Demo.cpp` and core game logic.
-- Runs a text-based version of the game.
 
 ### Build and Run the GUI Game
 ```
@@ -132,7 +124,7 @@ make clean
 - Role selection in `runAssignRolesScreen` is manual via popups for testing; a random assignment option is commented out.
 - Players with 10 or more coins must perform a coup, enforced by button state logic in the GUI.
 - The GUI is designed for a 1280x720 resolution; other resolutions may require adjustments.
-- The command-line version (`Demo.cpp`) is independent of SFML, making it portable for non-graphical environments.
+- The command-line version (`Main.cpp`) is independent of SFML, making it portable for non-graphical environments.
 - The test suite (`tests.cpp`) focuses on core game logic and does not test GUI components.
 
 ## Author & Date
