@@ -326,30 +326,17 @@ namespace coup
         // === כפתור Block Coup ===
         buttons.emplace_back(font, "Block Coup", sf::Vector2f(640 - 150.f / 2, 550.f), sf::Vector2f(150, 50), [this]() {
             Player* general = getCurrentPlayer();
-            Player* attacker = this->game.get_coup_attacker();
-
-            if (!general || general->role() != "General" || !attacker) return;
-
-            std::cout << general->name() << " blocked the coup from " << attacker->name() << std::endl;
-
-            this->game.set_awaiting_coup_block(false);
-
-            int attackerIndex = this->game.get_player_index(attacker);
-            const std::vector<Player*>& players = this->game.get_all_players();
-
-            size_t nextIndex = (attackerIndex + 1) % players.size();
-            while (!players[nextIndex]->is_active()) {
-                nextIndex = (nextIndex + 1) % players.size();
+            try {
+                this->game.block_coup(general);
+                setTurn(this->game.turn());
+                updateButtonStates();
+            } catch (const std::exception& e) {
+                std::cerr << "BlockCoup error: " << e.what() << std::endl;
             }
-
-            this->game.set_turn_to(players[nextIndex]);
-            this->game.set_coup_attacker(nullptr);
-            this->game.set_coup_target(nullptr);
-
-            setTurn(this->game.turn());
         });
         buttons.back().setVisible(false);
         buttons.back().setEnabled(false);
+
 
         // === כפתור Skip Coup Block ===
         buttons.emplace_back(font, "Skip Coup Block", sf::Vector2f(640 - 150.f / 2, 610.f), sf::Vector2f(150, 50), [this]() {
@@ -364,31 +351,6 @@ namespace coup
 
         buttons.back().setVisible(false);
         buttons.back().setEnabled(false);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     }
@@ -431,9 +393,6 @@ namespace coup
     }
 
 
-
-
-
     void GameRenderer::setTurn(const std::string& name) {
         if (name != current_turn_name) {
             current_turn_name = name;
@@ -443,7 +402,6 @@ namespace coup
         turnText.setString("Current Turn: " + name);
         updateButtonStates();
     }
-
 
 
     Player* GameRenderer::getCurrentPlayer() {

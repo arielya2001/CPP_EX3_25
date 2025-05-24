@@ -225,6 +225,32 @@ namespace coup {
 
         set_turn_to(get_all_players()[attackerIndex]);
     }
+    void Game::block_coup(Player* general) {
+        if (!awaiting_coup_block || !coup_attacker || !coup_target) {
+            throw std::runtime_error("No coup to block.");
+        }
+        if (!general || general->role() != "General" || !general->is_active()) {
+            throw std::runtime_error("Only an active General can block a coup.");
+        }
+
+        std::cout << general->name() << " blocked the coup from " << coup_attacker->name() << std::endl;
+
+        set_awaiting_coup_block(false);
+        set_coup_attacker(nullptr);
+        set_coup_target(nullptr);
+
+        int attackerIndex = get_player_index(coup_attacker);
+        const auto& players = get_all_players();
+
+        size_t nextIndex = (attackerIndex + 1) % players.size();
+        while (!players[nextIndex]->is_active()) {
+            nextIndex = (nextIndex + 1) % players.size();
+        }
+
+        set_turn_to(players[nextIndex]);
+    }
+
+
 
 
 

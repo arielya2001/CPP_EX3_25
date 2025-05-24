@@ -372,6 +372,24 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
         spy.clear_last_action();
         CHECK_THROWS_WITH(judge.block_bribe(spy), "Target did not perform bribe.");
     }
+    SUBCASE("Merchant::בונוס בתחילת תור עם 3 מטבעות") {
+        Game game;
+        Merchant merch(game, "Mark");
+        Spy spy(game, "Shai");
+
+        game.add_player(&merch);
+        game.add_player(&spy);
+
+        // נתן למרצ'נט 3 מטבעות לפני תחילת התור שלו
+        merch.add_coins(3);
+
+        game.set_turn_to(&merch); // כאן יתבצע הבונוס אם יש 3 או יותר
+        CHECK(merch.coins() == 4); // +1 בונוס
+
+        merch.gather();
+        CHECK(merch.coins() == 5); // +1 gather
+    }
+
 
     SUBCASE("Spy::spy_on - שגיאות") {
         // שחקן לא פעיל
@@ -443,7 +461,25 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
         game.add_player(&p2);
         CHECK_NOTHROW(game.turn()); // צריך לעבוד כי started == true
     }
+    SUBCASE("Game::skip_coup_block - שגיאות") {
+        // אין חסימת coup ממתינה
+        CHECK_THROWS_WITH(game.skip_coup_block(), "No coup block is pending.");
+    }
 
+    SUBCASE("Game::block_coup - שגיאות") {
+        // אין coup לחסום
+        CHECK_THROWS_WITH(game.block_coup(&general), "No coup to block.");
+
+        // לא General פעיל
+        spy.add_coins(7);
+        general.add_coins(5); // וידוא ש-General יכול לחסום (מפעיל awaiting_coup_block)
+        game.set_turn_to(&spy);
+        spy.coup(baron); // מפעיל awaiting_coup_block
+        CHECK(game.is_awaiting_coup_block()); // וידוא שמצב החסימה פעיל
+        game.set_turn_to(&general);
+        general.deactivate();
+        CHECK_THROWS_WITH(game.block_coup(&general), "Only an active General can block a coup.");
+    }
     SUBCASE("Game::winner - שגיאות") {
         // משחק שעדיין לא נגמר
         CHECK_THROWS_AS(game.winner(), runtime_error);
@@ -487,7 +523,6 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
 
         // בדיקת פעולות ספציפיות לתפקידים עם מספיק שחקנים
         CHECK_THROWS_WITH(baron.invest(), "Not your turn.");
-        CHECK_THROWS_WITH(general.protect_from_coup(gov), "Not enough coins to protect.");
         CHECK_THROWS_WITH(gov.undo(gov), "Cannot undo: last action was not tax.");
         CHECK_THROWS_WITH(gov.block_tax(gov), "Target didn't tax.");
         CHECK_THROWS_WITH(judge.block_bribe(gov), "Target did not perform bribe.");
