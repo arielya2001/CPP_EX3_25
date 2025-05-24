@@ -1,98 +1,96 @@
-# Coup Game - OOP Design in C++
-### Mail - ariel.yaacobi@msmail.ariel.ac.il
+# 🃏 CPP_EX3_25 – משחק "Coup"
 
-## Overview
-This project implements an object-oriented simulation of the board game **Coup**, designed for 2–6 players. It showcases inheritance, polymorphism (both regular and virtual), state machines, and interaction between multiple roles with unique abilities. It includes:
+## 🎯 מטרת הפרויקט
+הפרויקט מממש את משחק הלוח Coup בסביבת ++C תוך שימוש בירושה, פולימורפיזם, חריגות, תורים, ו־SFML לממשק גרפי.
 
-- Multiple role classes inheriting from a shared `Player` base.
-- A central `Game` controller that manages turn flow and player interactions.
-- A graphical user interface (GUI) built with SFML.
-- A full suite of unit tests using the `doctest` framework.
-- A complete Makefile for building, testing, and memory debugging.
+המשחק כולל:
+- מנגנון תורות
+- 6 דמויות שונות עם יכולות ייחודיות
+- מערכת חסימות והתנגשויות בין שחקנים
+- תמיכה בממשק שורת פקודה (CLI) ובממשק גרפי (GUI)
+- בדיקות יחידה עם doctest
 
-## File Structure
+---
+
+## 📁 מבנה תיקיות
+
 ```
 CPP_EX3_25/
-├── Game.hpp / Game.cpp         # Core game logic and turn management
-├── Player.hpp / Player.cpp     # Base class for all roles
-├── <Role>.hpp / <Role>.cpp     # Specific roles: Governor, Spy, Baron, etc.
-├── Demo.cpp                    # Console-based demo game flow
-├── main.cpp                    # Optional additional demo entry
-├── tests.cpp                   # Doctest-based unit tests
-├── gui/                        # GUI implementation using SFML
-│   ├── GameRenderer.cpp/.hpp
-│   ├── ActionLog.cpp/.hpp
-│   ├── GuiScreens.cpp
-│   └── ActionButton.hpp
-├── Makefile                    # Build, test, and memory check commands
-└── README.md                   # Project documentation (this file)
+│
+├── gui/                    # קבצי הממשק הגרפי
+│   ├── ActionButton.hpp
+│   ├── ActionLog.cpp/hpp
+│   ├── GameRenderer.cpp/hpp
+│   ├── GuiScreens.cpp/hpp
+│   └── main_gui.cpp
+│
+├── resources/              # קבצים נוספים (למשל תיעוד או קבצים עתידיים)
+│   ├── Baron.cpp/hpp
+│   ├── CMakeLists.txt
+│   └── doctest.h
+│
+├── Game.cpp/hpp            # מחלקת Game – לוח המשחק, תורים, חסימות
+├── Player.cpp/hpp          # מחלקת בסיס לשחקן, כוללת פעולות כלליות
+├── Governor.cpp/hpp        # מחלקת נציב – מטיל מסים וחוסם מס
+├── Spy.cpp/hpp             # מחלקת מרגל – חושף מידע וחוסם מעצרים
+├── Baron.cpp/hpp           # מחלקת ברון – השקעה ופיצוי על סנקציה
+├── General.cpp/hpp         # מחלקת גנרל – חוסם הפיכות ומחזיר מעצר
+├── Judge.cpp/hpp           # מחלקת שופט – חוסם שוחד וקונס מעניש
+├── Merchant.cpp/hpp        # מחלקת סוחר – בונוס תחילת תור וחוקי מעצר מיוחדים
+│
+├── main.cpp                # דמו למשחק – הפעלת משחקי הדגמה
+├── Demo.cpp                # דמו נוסף עם משחק מובנה
+├── tests.cpp               # בדיקות יחידה (doctest)
+│
+├── Makefile                # פקודות בנייה, הפעלה, בדיקה וניקוי
+└── README.md               # הקובץ הזה
 ```
 
-## Class Design
+---
 
-### `Game`
-- Tracks the list of players, current turn index, and overall game state.
-- Handles all role-neutral actions and control flow: `turn()`, `next_turn()`, `winner()`.
+## 🧠 הסבר על כל קובץ בקצרה
 
-### `Player` (Base Class)
-- Abstract class from which all roles inherit.
-- Provides basic functionality: `gather()`, `tax()`, `coup()`, `bribe()`, etc.
-- Manages player state (active/sanctioned/couped) and coin balance.
+| קובץ                        | תיאור |
+|-----------------------------|--------|
+| `Game.hpp/cpp`             | ניהול מצב המשחק, תורות, חסימות, והפניות בין שחקנים |
+| `Player.hpp/cpp`           | מחלקת בסיס לכל הדמויות. כוללת את הלוגיקה הכללית (gather, tax, arrest, וכו') |
+| `Governor.hpp/cpp`         | דמות "נציב" – מטיל מס מוגדל וחוסם tax של שחקנים אחרים |
+| `Spy.hpp/cpp`              | דמות "מרגל" – יכול להציץ על שחקנים ולחסום arrest |
+| `Baron.hpp/cpp`            | דמות "ברון" – השקעה, הגנה חלקית מסנקציות |
+| `General.hpp/cpp`          | דמות "גנרל" – חוסם הפיכה, מקבל החזר על arrest |
+| `Judge.hpp/cpp`            | דמות "שופט" – חוסם שוחד ומעניש על סנקציות |
+| `Merchant.hpp/cpp`         | דמות "סוחר" – מקבל בונוס בתחילת תור ונענש שונה על arrest |
+| `main.cpp`                 | קובץ דמו למשחק – משמש להרצה בסיסית ולבדיקת המשחק |
+| `Demo.cpp`                 | תסריט משחק נוסף (אפשר לשנות לפי הצורך) |
+| `tests.cpp`                | קובץ הבדיקות שמוודא שהלוגיקות עובדות כראוי |
+| `Makefile`                 | קובץ ההרצה – מאפשר לקמפל, לבדוק, להריץ גרפית, לבדוק זיכרון, ולנקות |
+| `doctest.h`                | ספריית בדיקות חיצונית מסוג header-only |
+| `gui/*`                    | רכיבי GUI – תצוגת המשחק, כפתורים, יומני פעולה, ומסך פתיחה |
+| `resources/`               | קבצי עזר/השלמה (כגון קבצים עתידיים או מקוריים) |
 
-### Derived Roles
-Each role overrides or adds functionality:
+---
 
-- **Governor** – `tax()` gives 3 coins instead of 2; can `undo()` or `block_tax()` for others.
-- **Spy** – Can `spy_on()` other players and `block_arrest()` against themselves or others.
-- **Baron** – Can `invest()` 3 coins for 6; gets 1 coin refund if sanctioned.
-- **General** – Can `block_coup()` (if has 5+ coins); refunds coin when arrested.
-- **Judge** – Can `block_bribe()`; imposes extra penalty on attacker when sanctioned.
-- **Merchant** – Gains bonus coin at start of turn if holding ≥3 coins; loses 2 coins to pot if arrested.
+## ⚙️ הפקודות החשובות ב־Makefile
 
-## Features
-- Full turn-based logic with support for interrupts (e.g., bribe/coup blocking).
-- Exception-safe: throws on illegal actions like arresting the same target twice, insufficient coins, or acting out of turn.
-- Turn preservation during interactive blocks (e.g., judge, general).
-- GUI version using **SFML** with player displays, logs, and action buttons.
-- Comprehensive unit tests and memory safety via `valgrind`.
+| פקודה              | תיאור |
+|---------------------|--------|
+| `make`              | קומפילציה רגילה (כולל Demo.cpp) |
+| `make run`          | מריץ את המשחק במצב שורת פקודה |
+| `make run-gui`      | מריץ את המשחק בממשק גרפי (SFML) |
+| `make test`         | מריץ את כל הבדיקות באמצעות doctest |
+| `make run-test`     | מריץ את בדיקות היחידה |
+| `make valgrind-test`| בודק זליגות זיכרון בטסטים |
+| `make valgrind-main`| בודק זיכרון על main |
+| `make clean`        | מוחק קבצי ביניים ותוצרים |
 
-## Usage
+---
 
-### Build and Run (Console)
-```
-make
-./coup_game
-```
+## 📌 הערות חשובות
 
-### Build and Run (Graphical)
-```
-make run-gui
-```
+- **לא לבצע פעולות עם יותר מדי מטבעות מבלי לעשות coup!**
+- **חסימות אינן "בזמן אמת" – אלא בתור הבא של השחקן**
+- **השימוש ב־bonus_turn מאפשר תורות כפולים (למשל לאחר bribe)**
 
-### Run Tests
-```
-make test
-./test_exec
-```
+---
 
-### Memory Check (Valgrind)
-```
-make valgrind-test
-```
-
-### Clean Project
-```
-make clean
-```
-
-## Notes
-- The GUI supports one shared screen with turn-dependent menus.
-- If a player has 10 coins at the start of their turn, they must perform a coup.
-- Bribe, tax, and coup can be blocked by specific roles **outside** the player's regular turn.
-- Arrest cannot be performed twice in a row on the same target.
-- Game ends automatically when only one active player remains.
-
-## Author & Date
-- Developed by: Ariel Ya'acobi
-- Assignment: Object-Oriented Programming - Coup Game
-- Date: May 2025
+בהצלחה בשימוש, ואם מישהו חוסם אותך – תקרא לשופט 😄
