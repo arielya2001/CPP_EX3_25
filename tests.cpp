@@ -435,11 +435,20 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
     SUBCASE("Game::add_player - שגיאות") {
         // הוספת שחקן כשהמשחק מלא
         Game full_game;
+        std::vector<Player*> allocated;
+
         for (int i = 0; i < 6; ++i) {
-            full_game.add_player(new Player(full_game, "Player" + to_string(i), ""));
+            Player* p = new Player(full_game, "Player" + to_string(i), "");
+            allocated.push_back(p);
+            full_game.add_player(p);
         }
-        CHECK_THROWS_AS(full_game.add_player(new Player(full_game, "Extra", "")), runtime_error);
-        CHECK_THROWS_WITH(full_game.add_player(new Player(full_game, "Extra", "")), "Cannot add more than 6 players.");
+        Player* extra = new Player(full_game, "Extra", "");
+        allocated.push_back(extra);
+        CHECK_THROWS_WITH(full_game.add_player(extra), "Cannot add more than 6 players.");
+
+        for (Player* p : allocated) {
+            delete p;
+        }
     }
     SUBCASE("Game::turn - שגיאות") {
         // משחק ללא שחקנים

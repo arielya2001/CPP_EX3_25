@@ -77,8 +77,15 @@ run: $(TARGET)
 
 run-gui: $(GUI_TARGET)
 	./$(GUI_TARGET)
-valgrind: test
+# בדיקת זליגות בטסטים
+valgrind-test: test
 	valgrind --leak-check=full --track-origins=yes ./$(TEST_TARGET)
+
+# בדיקת זליגות בקובץ main
+valgrind-main: main
+	valgrind --leak-check=full --track-origins=yes ./main
+
+
 
 
 clean:
