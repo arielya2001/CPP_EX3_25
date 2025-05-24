@@ -203,6 +203,29 @@ namespace coup {
             }
         }
     }
+    void Game::skip_coup_block() {
+        if (!awaiting_coup_block || !coup_attacker || !coup_target) {
+            throw runtime_error("No coup block is pending.");
+        }
+
+        std::cout << "General skipped coup block.\n";
+
+        coup_target->set_couped(true);
+        coup_target->deactivate();
+        std::cout << coup_attacker->name() << " performed coup on " << coup_target->name() << std::endl;
+
+        set_awaiting_coup_block(false);
+        set_coup_attacker(nullptr);
+        set_coup_target(nullptr);
+
+        int attackerIndex = get_player_index(coup_attacker);
+        do {
+            attackerIndex = (attackerIndex + 1) % num_players();
+        } while (!get_all_players()[attackerIndex]->is_active());
+
+        set_turn_to(get_all_players()[attackerIndex]);
+    }
+
 
 
 

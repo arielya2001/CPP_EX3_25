@@ -44,6 +44,10 @@ void game1() {
 
     b.tax(); print_status(game);
 
+    g.gather(); print_status(game);
+    s.gather(); print_status(game);
+    b.invest(); print_status(game);
+
     g.bribe(); print_status(game);
     g.arrest(s); print_status(game);
     g.tax(); print_status(game);
@@ -56,6 +60,13 @@ void game1() {
     } catch (const exception& e) {
         cout << "[Error] " << g.name() << ": " << e.what() << endl;
     }
+    g.sanction(b); print_status(game);
+    s.gather(); print_status(game);
+    b.arrest(g); print_status(game);
+
+    g.tax(); print_status(game);
+    s.gather(); print_status(game);
+    b.gather(); print_status(game);
 
 
     g.coup(b); print_status(game);
@@ -72,9 +83,11 @@ void game1() {
     s.gather(); print_status(game);
 
     g.gather(); print_status(game);
+    s.tax(); print_status(game);
+    g.skip_tax_block(); print_status(game);
+    g.gather(); print_status(game);
+
     s.gather(); print_status(game);
-
-
 
     g.coup(s); print_status(game);
 
@@ -85,96 +98,93 @@ void game2() {
     cout << "\n==== Game 2 ====" << endl;
     Game game;
 
-    Baron bar(game, "Tamar");
-    Merchant merch(game, "Noam");
-    Governor gov(game, "Gili");
-    Spy spidy(game, "spido");
+    General gen(game, "Dana");
+    Judge jud(game, "Lior");
+    Merchant mer(game, "Noam");
+    Spy spy(game, "Shai");
 
-    game.add_player(&bar);
-    game.add_player(&merch);
-    game.add_player(&gov);
-    game.add_player(&spidy);
+    game.add_player(&gen);
+    game.add_player(&jud);
+    game.add_player(&mer);
+    game.add_player(&spy);
 
-    auto debug_turn = [&](const std::string& label) {
-        std::cout << "[Debug][" << label << "] game.turn(): " << game.turn()
-                  << " | turn_index = " << game.get_turn_index()
-                  << " | Expected: " << gov.name()
-                  << " | (ptr match: "
-                  << ((void*)game.get_all_players()[game.get_turn_index()] == (void*)&gov)
-                  << ")" << std::endl;
-    };
+    // שלב 1: איסוף משאבים
+    gen.tax(); print_status(game); // General אוסף 1 מטבע
+    jud.gather(); print_status(game); // Judge אוסף 1 מטבע
+    mer.tax(); print_status(game); // Merchant מוסיף 2 מטבעות (אולי גם בונוס אם יש 3 מטבעות)
+    spy.gather(); print_status(game); // Spy אוסף 1 מטבע
 
-    bar.gather(); print_status(game);
-    merch.gather(); print_status(game);
-    gov.gather(); print_status(game);
-    debug_turn("After gov.gather");
+    // שלב 2: פעולות אינטראקטיביות
+    gen.tax(); print_status(game); // General מוסיף 2 מטבעות
+    jud.tax(); print_status(game); // Judge מוסיף 2 מטבעות
+    mer.gather(); print_status(game); // Merchant אוסף 1 מטבע (בונוס אם יש 3 מטבעות)
+    cout <<spy.spy_on(mer); print_status(game); // Spy: Merchant
+    spy.gather(); print_status(game);
 
-    spidy.gather(); print_status(game);
-    debug_turn("After spidy.gather");
+    // שלב 3: פעולות עם חסימות
+    gen.arrest(mer); print_status(game); // General מעצר על Merchant (Merchant משלם 2 לקופה)
+    jud.tax(); print_status(game); // Judge: פעולה חסרה - חוסם bribe של Merchant (אם היה)
+    mer.tax(); print_status(game); // Merchant מוסיף 2 מטבעות
+    spy.tax(); print_status(game); // Spy מוסיף 2 מטבעות
 
-    std::cout << "[Debug] merch name(): " << merch.name() << std::endl;
-    std::cout << "[Debug] game.turn(): " << game.turn() << std::endl;
-    bar.tax(); print_status(game);
-    debug_turn("After bar.tax");
-    std::cout << "[Debug] merch name(): " << merch.name() << std::endl;
-    std::cout << "[Debug] game.turn(): " << game.turn() << std::endl;
+    gen.bribe(); print_status(game);
+    jud.block_bribe(gen); print_status(game); // שופט חוסם ברייב
+    jud.tax(); print_status(game);
+    mer.tax(); print_status(game);
+    spy.tax(); print_status(game);
 
-    gov.skip_tax_block(); print_status(game);
-    std::cout << "[Debug] merch name(): " << merch.name() << std::endl;
-    std::cout << "[Debug] game.turn(): " << game.turn() << std::endl;
-    debug_turn("After gov.skip_tax_block 1");
+    // שלב 4: פעולות מתקדמות
+    gen.tax(); print_status(game); // General מוסיף 2 מטבעות
+    jud.tax(); print_status(game);
+    mer.sanction(jud); print_status(game); // mer משלם מטבע נוסף
+    spy.gather(); print_status(game);
 
-    std::cout << "[Debug] merch name(): " << merch.name() << std::endl;
-    std::cout << "[Debug] game.turn(): " << game.turn() << std::endl;
-    merch.tax(); print_status(game);
-    debug_turn("After merch.tax");
-
-    gov.skip_tax_block(); print_status(game);
-    gov.tax(); print_status(game);
-    debug_turn("After gov.tax");
-
-    spidy.tax(); print_status(game);
-    debug_turn("After spidy.tax");
-
-    gov.skip_tax_block(); print_status(game);
-    debug_turn("After gov.skip_tax_block 2");
-
-    bar.invest(); print_status(game);
-    merch.tax(); print_status(game);
-    gov.skip_tax_block(); print_status(game);
-    gov.tax(); print_status(game);
-    spidy.tax(); print_status(game);
-    gov.skip_tax_block(); print_status(game);
-
-    bar.tax(); print_status(game);
-    gov.skip_tax_block(); print_status(game);
-    merch.tax(); print_status(game);
-    gov.skip_tax_block(); print_status(game);
-
-    gov.undo(spidy); print_status(game);
-    spidy.spy_on(bar); print_status(game);
-    spidy.block_arrest(bar); print_status(game);
-    spidy.tax(); print_status(game);
-    gov.skip_tax_block(); print_status(game);
-
+    gen.gather(); print_status(game);
     try {
-        bar.arrest(merch); print_status(game);
+        jud.tax(); // judge לא יכול לבצע tax עקב sanction
     } catch (const exception& e) {
-        cout << ": " << e.what() << endl;
+        cout << "[Error] " << jud.name() << ": " << e.what() << endl;
     }
+    jud.arrest(spy); print_status(game);
+    mer.gather(); print_status(game);
+    spy.gather(); print_status(game);
 
-    bar.coup(spidy); print_status(game);
-    merch.coup(gov); print_status(game);
+    // שלב 5: הגנה והפיכות
+    gen.tax(); print_status(game);
+    try {
+        jud.gather(); // אי אפשר כי יש כבר 10 מטבעות
+    } catch (const exception& e) {
+        cout << "[Error] " << jud.name() << ": " << e.what() << endl;
+    }
+    jud.coup(mer); print_status(game);
+    game.skip_coup_block(); print_status(game);
+    spy.block_arrest(gen); print_status(game); // Spy: חוסם arrest על General
+    try {
+        gen.arrest(spy);
+    } catch (const exception& e) {
+        cout << "[Error] " << gen.name() << ": " << e.what() << endl;
+    }
+    gen.tax(); print_status(game);
+    jud.tax(); print_status(game); // Judge מוסיף 2 מטבעות
+    spy.gather(); print_status(game);
 
-    bar.tax(); print_status(game);
-    merch.tax(); print_status(game);
-    bar.tax(); print_status(game);
-    merch.tax(); print_status(game);
-    bar.tax(); print_status(game);
-    merch.tax(); print_status(game);
+    gen.gather(); print_status(game);
+    jud.gather(); print_status(game);
+    spy.gather(); print_status(game);
 
-    bar.coup(merch); print_status(game);
+    gen.gather(); print_status(game);
+    jud.arrest(gen); print_status(game); //gen should get back the coin
+    spy.gather(); print_status(game);
 
+    // // שלב 6: סיום עם הפיכות
+    gen.coup(spy); print_status(game); // General מדיח את Spy
+    jud.tax(); print_status(game); //
+    gen.tax(); print_status(game);
+    jud.gather(); print_status(game);
+    gen.gather(); print_status(game);
+    jud.gather(); print_status(game);
+    gen.sanction(jud); print_status(game); //gen should pay extra coin
+    jud.coup(gen); print_status(game); // Judge מדיח את General
     cout << "\n🏆 Winner: " << game.winner() << endl;
 }
 

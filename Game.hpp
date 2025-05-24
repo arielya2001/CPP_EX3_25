@@ -81,6 +81,7 @@ namespace coup {
         void init_tax_blockers(Player* initiator);
         void init_bribe_blockers(Player* briber);
         void advance_bribe_block_queue();
+        void skip_coup_block();
         Player* pop_next_tax_blocker();
         Player* pop_next_bribe_blocker();
 

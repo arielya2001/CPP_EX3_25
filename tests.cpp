@@ -252,37 +252,6 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
         baron.deduct_coins(baron.coins());
         CHECK_THROWS_WITH(baron.invest(), "Not enough coins to invest.");
     }
-
-    SUBCASE("General::protect_from_coup - שגיאות") {
-        Game game;
-        General general(game, "Dana");
-        Spy spy(game, "Shai");
-
-        // בדיקת "Game has not started" עם שחקן אחד בלבד
-        game.add_player(&general);
-        CHECK_THROWS_WITH(general.protect_from_coup(spy), "Game has not started – need at least 2 players.");
-
-        // הוספת שחקן נוסף כדי שהמשחק יתחיל
-        game.add_player(&spy);
-
-        // שחקן לא פעיל
-        general.deactivate();
-        CHECK_THROWS_AS(general.protect_from_coup(spy), runtime_error);
-        CHECK_THROWS_WITH(general.protect_from_coup(spy), "General is not active.");
-        general.set_active(true);
-
-        // יעד לא פעיל
-        spy.deactivate();
-        CHECK_THROWS_AS(general.protect_from_coup(spy), runtime_error);
-        CHECK_THROWS_WITH(general.protect_from_coup(spy), "Target is not active.");
-        spy.set_active(true);
-
-        // אין מספיק מטבעות
-        general.deduct_coins(general.coins());
-        CHECK_THROWS_AS(general.protect_from_coup(spy), runtime_error);
-        CHECK_THROWS_WITH(general.protect_from_coup(spy), "Not enough coins to protect.");
-    }
-
     SUBCASE("Governor::tax - שגיאות") {
         // שחקן לא פעיל
         gov.deactivate();

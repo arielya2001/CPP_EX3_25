@@ -353,30 +353,15 @@ namespace coup
 
         // === כפתור Skip Coup Block ===
         buttons.emplace_back(font, "Skip Coup Block", sf::Vector2f(640 - 150.f / 2, 610.f), sf::Vector2f(150, 50), [this]() {
-            Player* attacker = this->game.get_coup_attacker();
-            Player* target = this->game.get_coup_target();
-
-            if (!attacker || !target) return;
-
-            std::cout << "General skipped coup block.\n";
-
-            target->set_couped(true);
-            target->deactivate();
-            updateTextEntries();
-            std::cout << attacker->name() << " performed coup on " << target->name() << std::endl;
-
-            this->game.set_awaiting_coup_block(false);
-            this->game.set_coup_attacker(nullptr);
-            this->game.set_coup_target(nullptr);
-
-            int attackerIndex = this->game.get_player_index(attacker);
-            do {
-                attackerIndex = (attackerIndex + 1) % this->game.num_players();
-            } while (!this->game.get_all_players()[attackerIndex]->is_active());
-
-            this->game.set_turn_to(this->game.get_all_players()[attackerIndex]);
-            setTurn(this->game.turn());
+            try {
+                this->game.skip_coup_block();
+                setTurn(this->game.turn());
+                updateButtonStates();
+            } catch (const std::exception& e) {
+                std::cerr << "SkipCoupBlock error: " << e.what() << std::endl;
+            }
         });
+
         buttons.back().setVisible(false);
         buttons.back().setEnabled(false);
 
