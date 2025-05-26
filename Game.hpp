@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <deque>  // למעלה בקובץ
-#include <stddef.h> // גרסה C-style, גם תקפה
 
 namespace coup {
     class Player;  // Forward declaration – Game uses Player before it's defined

@@ -224,11 +224,6 @@ namespace coup {
     bool Player::was_arrested_recently() const { return was_arrested_last; }
     void Player::set_arrested_recently(bool val) { was_arrested_last = val; }
 
-    void Player::undo(Player& target) {
-        (void)target;
-        throw std::runtime_error("This role cannot perform undo.");
-    }
-
     bool Player::has_bonus_turn() const { return bonus_turns > 0; }
 
     void Player::use_bonus_turn() {

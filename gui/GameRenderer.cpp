@@ -1,6 +1,11 @@
 #include "GameRenderer.hpp"
 #include <iostream>
 #include <sstream>
+#include "../Spy.hpp"
+#include "../Judge.hpp"
+#include "../Governor.hpp"
+#include "../Baron.hpp"
+
 
 namespace coup
 {
@@ -166,7 +171,6 @@ namespace coup
         buttons.back().setVisible(false);
         buttons.back().setEnabled(false);
 
-        // === כפתור Block Tax ===
         // === כפתור Block Tax ===
         buttons.emplace_back(font, "Block Tax", sf::Vector2f(300, 430.f), sf::Vector2f(150, 50), [this]() {
             Player* governor = getCurrentPlayer();
@@ -462,6 +466,15 @@ namespace coup
         for (auto& btn : buttons) {
             const std::string& label = btn.getLabel();
 
+            // אם לשחקן יש 10 מטבעות – להציג אך ורק את כפתור ה־Coup
+            if (mustCoup) {
+                bool show = (label == "Coup");
+                btn.setVisible(show);
+                btn.setEnabled(show);
+                continue;
+            }
+
+
             // מצב מיוחד: נציב בתור חסימת tax
             if (game.is_awaiting_tax_block()) {
                 if (current->role() == "Governor") {
@@ -543,10 +556,7 @@ namespace coup
 
             // --- כל שאר הכפתורים הרגילים ---
             btn.setVisible(true);
-            if (mustCoup) {
-                btn.setEnabled(label == "Coup");
-                continue;
-            }
+
 
             if (label == "Gather") {
                 btn.setEnabled(!current->is_gather_blocked() && !current->is_sanctioned());

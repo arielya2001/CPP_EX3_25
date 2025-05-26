@@ -12,9 +12,6 @@ namespace coup {
         /// Takes 3 coins and may trigger tax block phase
         void tax() override;
 
-        /// Undoes another player's tax action
-        void undo(Player& target) override;
-
         /// Blocks a tax action and refunds coins
         void block_tax(Player& target);
 

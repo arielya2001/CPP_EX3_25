@@ -210,12 +210,6 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
         CHECK_THROWS_WITH(gov.coup(spy), "Not enough coins to perform coup.");
     }
 
-    SUBCASE("Player::undo - שגיאות") {
-        // פעולה לא חוקית עבור שחקן רגיל
-        CHECK_THROWS_AS(spy.undo(gov), runtime_error);
-        CHECK_THROWS_WITH(spy.undo(gov), "This role cannot perform undo.");
-    }
-
     SUBCASE("Player::deduct_coins - שגיאות") {
         // ניסיון להפחית יותר מטבעות ממה שיש
         gov.deduct_coins(gov.coins());
@@ -275,45 +269,6 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
         gov.set_sanctioned(true);
         CHECK_THROWS_AS(gov.tax(), runtime_error);
         CHECK_THROWS_WITH(gov.tax(), "You are under sanction and cannot tax.");
-    }
-
-    SUBCASE("Governor::undo - שגיאות") {
-        Game game;
-        Governor gov(game, "Gili");
-        Spy spy(game, "Shai");
-
-        // בדיקת "Game has not started" עם שחקן אחד בלבד
-        game.add_player(&gov);
-        CHECK_THROWS_WITH(gov.undo(spy), "Game has not started – need at least 2 players.");
-
-        // הוספת שחקן נוסף כדי שהמשחק יתחיל
-        game.add_player(&spy);
-
-        // שחקן לא פעיל
-        gov.deactivate();
-        CHECK_THROWS_AS(gov.undo(spy), std::runtime_error);
-        CHECK_THROWS_WITH(gov.undo(spy), "Governor is not active.");
-        gov.set_active(true);
-
-        // יעד לא פעיל
-        spy.deactivate();
-        CHECK_THROWS_AS(gov.undo(spy), std::runtime_error);
-        CHECK_THROWS_WITH(gov.undo(spy), "Target is not active.");
-        spy.set_active(true);
-
-        // הפעולה האחרונה של היעד אינה tax
-        spy.clear_last_action();
-        CHECK_THROWS_AS(gov.undo(spy), std::runtime_error);
-        CHECK_THROWS_WITH(gov.undo(spy), "Cannot undo: last action was not tax.");
-
-        // אין מספיק מטבעות ליעד
-        game.set_turn_to(&spy);
-        CHECK(game.turn() == "Shai"); // בדיקת תור
-        spy.add_coins(2); // וידוא שיש מספיק מטבעות ל-tax
-        spy.tax(); // מגדיר last_action כ-"tax"
-        spy.deduct_coins(spy.coins()); // הסרת כל המטבעות לאחר tax
-        CHECK_THROWS_AS(gov.undo(spy), std::runtime_error);
-        CHECK_THROWS_WITH(gov.undo(spy), "Target doesn't have enough coins to undo.");
     }
     SUBCASE("Governor::block_tax - שגיאות") {
         Game game;
@@ -532,7 +487,6 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
 
         // בדיקת פעולות ספציפיות לתפקידים עם מספיק שחקנים
         CHECK_THROWS_WITH(baron.invest(), "Not your turn.");
-        CHECK_THROWS_WITH(gov.undo(gov), "Cannot undo: last action was not tax.");
         CHECK_THROWS_WITH(gov.block_tax(gov), "Target didn't tax.");
         CHECK_THROWS_WITH(judge.block_bribe(gov), "Target did not perform bribe.");
     }

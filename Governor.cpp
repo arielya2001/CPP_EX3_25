@@ -37,27 +37,6 @@ void Governor::tax() {
     game.next_turn();
 }
 
-/// Undoes a tax action performed by another player (typically triggered by a Governor).
-void Governor::undo(Player& target) {
-    if (game.num_players() < 2) {
-        throw runtime_error("Game has not started – need at least 2 players.");
-    }
-    if (!is_active()) throw runtime_error("Governor is not active.");
-    if (!target.is_active()) throw runtime_error("Target is not active.");
-
-    if (target.get_last_action() != "tax") {
-        throw runtime_error("Cannot undo: last action was not tax.");
-    }
-
-    if (target.coins() < 2) {
-        throw runtime_error("Target doesn't have enough coins to undo.");
-    }
-
-    target.deduct_coins(2);
-    target.clear_last_action();
-    game.next_turn();
-}
-
 /// Blocks a tax action, refunds coins from the target, and resumes turn order.
 void Governor::block_tax(Player& target) {
     if (game.num_players() < 2) {

@@ -32,7 +32,6 @@ namespace coup {
         virtual void arrest(Player& target);
         virtual void sanction(Player& target);
         virtual void coup(Player& target);
-        virtual void undo(Player& target); ///< Default: throws error unless overridden
 
         /// Accessors
         std::string name() const;
