@@ -85,7 +85,7 @@ make run-gui
 - Runs the interactive GUI game with the following flow:
   1. Opening screen: Click "Let the Games Begin" to start.
   2. Add players: Enter 2–6 player names and click "Gather the Players."
-  3. Assign roles: Select a role for each player via popups.
+  3. Assign roles: Randomize a  role for each player.
   4. Game loop: Interact via buttons to perform actions until a winner is declared.
 
 ### Build and Run Unit Tests
