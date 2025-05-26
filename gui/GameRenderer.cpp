@@ -209,10 +209,10 @@ namespace coup
         std::cout << "[DEBUG] Calling realGov->block_tax()\n";
         realGov->block_tax(*taxed);
 
-        this->game.set_awaiting_tax_block(false);  // ⬅️ מוודא שלא יהיה ניסיון נוסף
+        this->game.set_awaiting_tax_block(false);  // מוודא שלא יהיה ניסיון נוסף
         updateTextEntries();
         setTurn(this->game.turn());
-        updateButtonStates();  // ⬅️ מכבה את הכפתור
+        updateButtonStates();  // מכבה את הכפתור
     } catch (const std::exception& e) {
         std::cerr << "BlockTax error: " << e.what() << std::endl;
     }
@@ -517,7 +517,7 @@ namespace coup
 
 
 
-            // 👇 תיקון חשוב: לא להסתיר כפתורים מיוחדים אם הם במצב רלוונטי
+            //  לא להסתיר כפתורים מיוחדים אם הם במצב רלוונטי
             if ((label == "Block Bribe" || label == "Skip") && !game.is_awaiting_bribe_block()) {
                 btn.setVisible(false);
                 continue;

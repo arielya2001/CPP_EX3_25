@@ -27,7 +27,6 @@ void Governor::tax() {
 
     for (Player* p : game.get_all_players()) {
         if (p->is_active() && p->role() == "Governor" && p != this) {
-            // ⬅️ תיקון חשוב – חייבים לשמור את אינדקס השחקן שתקף
             game.set_last_tax_index(game.get_player_index(this));
             game.set_awaiting_tax_block(true);
             game.set_tax_target(this);
@@ -65,7 +64,7 @@ void Governor::block_tax(Player& target) {
     } while (!players[index]->is_active());
 
     game.set_turn_to(players[index]);
-    game.set_turn_index(index);  // ← נשמור את המיקום החדש
+    game.set_turn_index(index);
 }
 
 /// Skips current Governor's tax block and moves to next or resumes game.
@@ -86,7 +85,7 @@ void Governor::skip_tax_block() {
         const auto& players = game.get_all_players();
         do { index = (index + 1) % players.size(); } while (!players[index]->is_active());
         game.set_turn_to(players[index]);
-        game.set_turn_index(index);  // ← נשמור את המיקום החדש
+        game.set_turn_index(index);
     }
 }
 

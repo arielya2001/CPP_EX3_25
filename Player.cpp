@@ -54,7 +54,7 @@ namespace coup {
 
         for (Player* p : game.get_all_players()) {
             if (p->is_active() && p->role() == "Governor" && p != this) {
-                game.set_last_tax_index_if_needed(game.get_player_index(this));  // ✅ only if new
+                game.set_last_tax_index_if_needed(game.get_player_index(this));
                 game.init_tax_blockers(this);
                 game.set_awaiting_tax_block(true);
                 game.set_tax_target(this);

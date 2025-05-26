@@ -15,6 +15,7 @@ Mail - ariel.yaacobi@msmail.ariel.ac.il
 #include "../Judge.hpp"
 #include "../Merchant.hpp"
 #include "GuiScreens.hpp"
+#include "GameRenderer.hpp"
 
 namespace coup
 {
@@ -444,16 +445,16 @@ namespace coup
 
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
                 if (currentPlayerIndex < players.size()) {
-                    //std::uniform_int_distribution<> dis(0, roleNames.size() - 1);
-                    //std::string role = roleNames[dis(gen)];
-                    // THIS IS ONLY FOR TEST AND WHEN YOU WANT TO CHOOSE MANUALLY!!!
-                    std::string selectedRole = popupSelectRole(window, font); // פונקציה שתיצור popup לבחירת תפקיד
-                    std::string role = selectedRole; // ולא אקראי
-                    // THIS IS ONLY FOR TEST AND WHEN YOU WANT TO CHOOSE MANUALLY!!!
+                    // רשימת התפקידים
+                    std::vector<std::string> roleNames = {"Governor", "Spy", "Baron", "General", "Judge", "Merchant"};
+                    static std::random_device rd;
+                    static std::mt19937 gen(rd());
+                    std::uniform_int_distribution<> dis(0, roleNames.size() - 1);
+                    std::string role = roleNames[dis(gen)]; // בחירה רנדומלית של תפקיד
 
                     std::string name = players[currentPlayerIndex]->name();
-
                     Player* newPlayer = nullptr;
+
                     if (role == "Governor") newPlayer = new Governor(game, name);
                     else if (role == "Spy") newPlayer = new Spy(game, name);
                     else if (role == "Baron") newPlayer = new Baron(game, name);
@@ -467,6 +468,7 @@ namespace coup
                     currentPlayerIndex++;
                 }
             }
+
 
             if (event.type == sf::Event::MouseButtonPressed &&
                 event.mouseButton.button == sf::Mouse::Left) {
