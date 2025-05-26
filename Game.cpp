@@ -1,6 +1,8 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #include "Game.hpp"
 #include "Player.hpp"
-#include "Spy.hpp"
 #include <stdexcept>
 #include <iostream>
 using namespace std;

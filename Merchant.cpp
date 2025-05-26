@@ -1,3 +1,6 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #include "Merchant.hpp"
 #include <iostream>
 

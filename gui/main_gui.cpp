@@ -1,3 +1,6 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #include "../Game.hpp"
 #include "GuiScreens.hpp"
 using namespace coup;

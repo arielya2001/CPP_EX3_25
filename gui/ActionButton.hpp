@@ -1,3 +1,6 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #pragma once
 
 #include <SFML/Graphics.hpp>

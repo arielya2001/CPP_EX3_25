@@ -1,3 +1,6 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #include "General.hpp"
 #include "Game.hpp"
 #include <stdexcept>

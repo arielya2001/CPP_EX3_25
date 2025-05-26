@@ -1,3 +1,6 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #include "GameRenderer.hpp"
 #include <iostream>
 #include <sstream>

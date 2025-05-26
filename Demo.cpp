@@ -1,3 +1,6 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #include "Player.hpp"
 #include "Governor.hpp"
 #include "Spy.hpp"
@@ -53,7 +56,7 @@ int main() {
 
     // Expected exception - Judge cannot undo tax
     try{
-        judge.undo(governor);
+        judge.block_bribe(governor);
     } catch (const std::exception &e) {
         std::cerr << e.what() << '\n';
     }
@@ -61,7 +64,7 @@ int main() {
     cout << governor.coins() << endl; // Expected: 2
     cout << spy.coins() << endl; // Expected: 3
 
-    governor.undo(spy); // Governor undo tax
+    governor.block_tax(spy); // Governor undo tax
     cout << spy.coins() << endl; // Expected: 1
 
     baron.tax();

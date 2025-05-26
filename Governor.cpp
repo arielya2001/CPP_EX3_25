@@ -1,3 +1,6 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #include "Governor.hpp"
 #include <stdexcept>
 #include <iostream>

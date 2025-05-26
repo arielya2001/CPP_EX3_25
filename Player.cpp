@@ -1,3 +1,6 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #include "Player.hpp"
 #include "Spy.hpp"
 #include "Baron.hpp"

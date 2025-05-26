@@ -1,10 +1,12 @@
+/*
+Mail - ariel.yaacobi@msmail.ariel.ac.il
+*/
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "../Game.hpp"
 #include "../Player.hpp"
 #include <string>
 #include <vector>
-#include "GameRenderer.hpp"
 namespace coup {
     // Displays a popup window to select a target player and returns the chosen player's name
     std::string popupSelectTarget(sf::RenderWindow& parentWindow, const std::vector<Player*>& players, sf::Font& font);
