@@ -343,6 +343,7 @@ namespace coup  // Start of the coup namespace
         buttons.emplace_back(font, "Skip Coup Block", sf::Vector2f(640 - 150.f / 2, 610.f), sf::Vector2f(150, 50), [this]() {
             try {
                 this->game.skip_coup_block();                                  // Skip blocking the coup
+                updateTextEntries();
                 setTurn(this->game.turn());                                    // Update turn
                 updateButtonStates();                                          // Refresh buttons
             } catch (const std::exception& e) {

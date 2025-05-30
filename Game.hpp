@@ -4,7 +4,7 @@ Mail - ariel.yaacobi@msmail.ariel.ac.il
 #pragma once
 #include <vector>
 #include <string>
-#include <deque>  // למעלה בקובץ
+#include <deque>
 
 namespace coup {
     class Player;  // Forward declaration – Game uses Player before it's defined
@@ -177,6 +177,8 @@ namespace coup {
         /// Returns the next player eligible to block bribe. Returns nullptr if none.
         Player* pop_next_bribe_blocker();
 
+
+        // returns the current player
         Player* get_current_player() const;
 
     };

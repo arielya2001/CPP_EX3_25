@@ -453,8 +453,10 @@ bool runAssignRolesScreen(Game& game) {                                    // Fu
                         "Governor", "Spy", "Baron", "General", "Judge", "Merchant"
                     };
 
-                    std::string role = popupSelectRole(window, font);     // Show popup to choose role
-                    std::string name = players[currentPlayerIndex]->name(); // Get current player name
+                    std::uniform_int_distribution<> dis(0, roleNames.size() - 1); //random choice number
+                    std::string role = roleNames[dis(gen)]; // random role choose
+
+                    std::string name = players[currentPlayerIndex]->name();
                     Player* newPlayer = nullptr;
 
                     // Create new role-specific player object

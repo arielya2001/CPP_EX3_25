@@ -203,7 +203,9 @@ namespace coup {
             game.set_turn_to(firstGen);
             return;
         }
-
+        game.set_awaiting_coup_block(false); // Reset block phase
+        game.set_coup_attacker(nullptr);     // Clear attacker
+        game.set_coup_target(nullptr);       // Clear target
         last_arrested_target = nullptr;
         target.set_couped(true);
         target.deactivate();
