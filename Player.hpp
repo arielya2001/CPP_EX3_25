@@ -27,6 +27,8 @@ namespace coup {
         /// Constructs a player with name and role
         Player(Game& game, const std::string& name, const std::string& role);
         virtual ~Player() = default;
+        Player(const Player&) = delete;            // אין העתקה
+        Player& operator=(const Player&) = delete; // אין השמה
 
         /// Basic actions
         virtual void gather();

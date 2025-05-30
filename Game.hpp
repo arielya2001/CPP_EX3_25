@@ -43,6 +43,8 @@ namespace coup {
         // Queues for managing multiple blockers
         std::deque<Player*> tax_blockers_queue;
         std::deque<Player*> bribe_blockers_queue;
+        std::deque<Player*> coup_blockers_queue;
+
 
     public:
         /// Constructor that initializes the game state.
@@ -156,6 +158,10 @@ namespace coup {
         /// Initializes the queue of players who may block a bribe action.
         void init_bribe_blockers(Player* briber);
 
+        void init_coup_blockers(Player* attacker);
+
+        Player* pop_next_coup_blocker();
+
         /// Advances to the next judge in the bribe block queue or returns to the briber.
         void advance_bribe_block_queue();
 
@@ -170,5 +176,8 @@ namespace coup {
 
         /// Returns the next player eligible to block bribe. Returns nullptr if none.
         Player* pop_next_bribe_blocker();
+
+        Player* get_current_player() const;
+
     };
 }

@@ -33,6 +33,179 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
     game.add_player(&general);
     game.add_player(&judge);
 
+    SUBCASE("Player::gather - Successful execution") {
+        game.set_turn_to(&gov);
+        gov.add_coins(5); // Ensure less than 10 coins
+        int initial_coins = gov.coins();
+        gov.gather();
+        CHECK(gov.coins() == initial_coins + 1); // Adds 1 coin
+        CHECK(game.turn() == "Shai"); // Advances to next player
+    }
+    SUBCASE("Governor::tax - Successful execution") {
+        game.set_turn_to(&gov);
+        gov.add_coins(5); // Ensure less than 10 coins
+        int initial_coins = gov.coins();
+        gov.tax();
+        CHECK(gov.coins() == initial_coins + 3); // Adds 3 coins
+        CHECK_FALSE(game.is_awaiting_tax_block()); // No block phase (no other Governors)
+        CHECK(game.get_tax_target() == nullptr); // No target
+        CHECK(game.turn() == "Shai"); // Advances to next player
+    }
+
+    SUBCASE("Player::bribe - Successful execution") {
+        game.set_turn_to(&gov);
+        gov.add_coins(4); // Enough for bribe
+        int initial_coins = gov.coins();
+        gov.bribe();
+        CHECK(gov.coins() == initial_coins - 4); // Deducts 4 coins
+        CHECK(gov.has_bonus_turn()); // Grants bonus turn
+        CHECK(game.is_awaiting_bribe_block()); // Sets bribe block state
+        CHECK(game.turn() == "Lior"); // Judge’s turn to block
+        game.advance_bribe_block_queue(); // Advance to briber
+        CHECK(game.turn() == "Gili"); // Returns to Gili
+    }
+
+    SUBCASE("Player::arrest - Successful execution on General") {
+        game.set_turn_to(&gov);
+        general.add_coins(2); // Ensure General has coins
+        int gov_initial_coins = gov.coins();
+        int general_initial_coins = general.coins();
+        gov.arrest(general);
+        CHECK(gov.coins() == gov_initial_coins); // No net coin change
+        CHECK(general.coins() == general_initial_coins); // General refunds 1 coin
+        CHECK(game.turn() == "Shai"); // Advances to next player
+    }
+
+    SUBCASE("Player::arrest - Successful execution on Merchant") {
+        game.set_turn_to(&gov);
+        merch.add_coins(2); // Ensure Merchant has coins
+        int gov_initial_coins = gov.coins();
+        int merch_initial_coins = merch.coins();
+        gov.arrest(merch);
+        CHECK(gov.coins() == gov_initial_coins); // No coin gain
+        CHECK(merch.coins() == merch_initial_coins - 2); // Merchant loses 2 coins
+        CHECK(game.turn() == "Shai"); // Advances to next player
+    }
+
+    SUBCASE("Player::sanction - Successful execution on Baron") {
+        game.set_turn_to(&gov);
+        gov.add_coins(3); // Enough for sanction
+        baron.add_coins(2); // Ensure Baron has coins
+        int gov_initial_coins = gov.coins();
+        int baron_initial_coins = baron.coins();
+        gov.sanction(baron);
+        CHECK(gov.coins() == gov_initial_coins - 3); // Deducts 3 coins
+        CHECK(baron.coins() == baron_initial_coins + 1); // Baron gains 1 coin
+        CHECK(baron.is_sanctioned()); // Baron is sanctioned
+        CHECK(game.turn() == "Shai"); // Advances to next player
+    }
+
+    SUBCASE("Player::sanction - Successful execution on Judge") {
+        game.set_turn_to(&gov);
+        gov.add_coins(5); // Enough for sanction (4) + penalty (1)
+        judge.add_coins(2);
+        int gov_initial_coins = gov.coins();
+        int judge_initial_coins = judge.coins();
+        gov.sanction(judge);
+        CHECK(gov.coins() == gov_initial_coins - 4); // Deducts 4 + 1 penalty
+        CHECK(judge.is_sanctioned()); // Judge is sanctioned
+        CHECK(game.turn() == "Shai"); // Advances to next player
+    }
+
+    SUBCASE("Player::coup - Successful execution") {
+        game.set_turn_to(&gov);
+        gov.add_coins(7); // Enough for coup
+        general.add_coins(5);
+        int initial_coins = gov.coins();
+        gov.coup(spy);
+        CHECK(gov.coins() == initial_coins - 7); // Deducts 7 coins
+        CHECK(game.is_awaiting_coup_block()); // Sets coup block state
+        CHECK(game.get_coup_target() == &spy); // Target is Spy
+        CHECK(game.turn() == "Dana"); // General’s turn to block
+        game.skip_coup_block();
+        CHECK(!spy.is_active()); // Spy is deactivated
+        CHECK_FALSE(game.is_awaiting_coup_block());
+    }
+
+    SUBCASE("Baron::invest - Successful execution") {
+        game.set_turn_to(&baron);
+        baron.add_coins(3); // Enough for investment
+        int initial_coins = baron.coins();
+        baron.invest();
+        CHECK(baron.coins() == initial_coins + 3); // Deducts 3, adds 6
+        CHECK(game.turn() == "Noam"); // Advances to next player
+    }
+
+    SUBCASE("Spy::spy_on - Successful execution") {
+        game.set_turn_to(&spy);
+        gov.add_coins(5); // Target has coins
+        int spy_initial_coins = spy.coins();
+        int gov_initial_coins = gov.coins();
+        int coins_seen = spy.spy_on(gov);
+        CHECK(coins_seen == gov_initial_coins); // Sees correct coin count
+        CHECK(spy.coins() == spy_initial_coins); // No coin change
+        CHECK(gov.coins() == gov_initial_coins); // No coin change
+        CHECK(game.turn() == "Shai"); // No turn advancement
+    }
+
+    SUBCASE("Governor::block_tax - Successful execution") {
+        game.set_turn_to(&spy);
+        spy.add_coins(5); // Ensure enough coins
+        int initial_coins = spy.coins();
+        spy.tax();
+        game.set_turn_to(&gov); // Governor’s turn to block
+        gov.block_tax(spy);
+        CHECK(spy.coins() == initial_coins); // Tax coins (2) removed
+        CHECK_FALSE(game.is_awaiting_tax_block()); // Clears tax block state
+        CHECK(game.turn() == "Tamar"); // Advances to next player
+    }
+
+    SUBCASE("Judge::block_bribe - Successful execution") {
+        game.set_turn_to(&gov);
+        gov.add_coins(4); // Enough for bribe
+        gov.bribe();
+        int judge_initial_coins = judge.coins();
+        game.set_turn_to(&judge); // Judge’s turn to block
+        judge.block_bribe(gov);
+        CHECK(judge.coins() == judge_initial_coins); // No coin gain
+        CHECK_FALSE(game.is_awaiting_bribe_block()); // Clears bribe block state
+        CHECK_FALSE(gov.has_bonus_turn()); // Bonus turn removed
+        CHECK(game.turn() == "Shai"); // Advances to next player
+    }
+
+    SUBCASE("Spy::block_arrest - Successful execution") {
+        game.set_turn_to(&spy);
+        gov.add_coins(2); // Ensure Governor can attempt arrest
+        spy.block_arrest(gov); // Block Gov’s future arrest
+        CHECK(spy.is_arrest_blocked(&gov)); // Arrest is blocked
+        game.set_turn_to(&gov);
+        CHECK_THROWS_AS(gov.arrest(spy), std::runtime_error); // Arrest fails
+        CHECK(game.turn() == "Gili"); // Turn remains with Gov
+    }
+
+    SUBCASE("General::block_coup - Successful execution") {
+        game.set_turn_to(&spy);
+        spy.add_coins(7); // Enough for coup
+        general.add_coins(5); // Enough to block
+        spy.coup(baron);
+        int general_initial_coins = general.coins();
+        game.block_coup(&general);
+        CHECK(general.coins() == general_initial_coins - 5); // Deducts 5 coins
+        CHECK(baron.is_active()); // Baron remains active
+        CHECK_FALSE(game.is_awaiting_coup_block()); // Clears coup block state
+    }
+
+    SUBCASE("Merchant::turn_start_bonus - Successful execution") {
+        game.set_turn_to(&merch);
+        merch.add_coins(3); // Enough for bonus
+        int initial_coins = merch.coins();
+        game.set_turn_to(&merch); // Triggers bonus
+        CHECK(merch.coins() == initial_coins + 1); // Adds 1 coin
+        CHECK(game.turn() == "Noam"); // Turn remains with Merchant
+    }
+
+
+
     SUBCASE("Player::gather - שגיאות") {
         // שחקן לא פעיל
         gov.deactivate();
@@ -435,7 +608,7 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
 
     SUBCASE("Game::block_coup - שגיאות") {
         // אין coup לחסום
-        CHECK_THROWS_WITH(game.block_coup(&general), "No coup to block.");
+        CHECK_THROWS_WITH(game.block_coup(&general), "No coup block is pending.");
 
         // לא General פעיל
         spy.add_coins(7);
@@ -445,6 +618,7 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
         CHECK(game.is_awaiting_coup_block()); // וידוא שמצב החסימה פעיל
         game.set_turn_to(&general);
         general.deactivate();
+        general.set_active(false);
         CHECK_THROWS_WITH(game.block_coup(&general), "Only an active General can block a coup.");
     }
     SUBCASE("Game::winner - שגיאות") {
@@ -492,5 +666,86 @@ TEST_CASE("בדיקת שגיאות עבור פעולות שחקן") {
         CHECK_THROWS_WITH(baron.invest(), "Not your turn.");
         CHECK_THROWS_WITH(gov.block_tax(gov), "Target didn't tax.");
         CHECK_THROWS_WITH(judge.block_bribe(gov), "Target did not perform bribe.");
+    }
+}
+TEST_CASE("בדיקת חסימת Tax בין Governors") {
+    Game game;
+
+    Governor gov(game, "Gili");
+    Governor gov2(game, "Ariel");
+
+    game.add_player(&gov);
+    game.add_player(&gov2);
+
+    SUBCASE("Tax Action") {
+        game.set_turn_to(&gov);
+
+        // Gili (Governor ראשון) מבצע tax
+        gov.tax();
+
+        CHECK(game.is_awaiting_tax_block());
+        CHECK(game.get_tax_target() == &gov);
+        CHECK(game.get_tax_source() == &gov2);
+        CHECK(game.turn() == "Ariel");
+
+        // Ariel בוחר לדלג על חסימה
+        gov2.skip_tax_block();
+        CHECK_FALSE(game.is_awaiting_tax_block());
+        CHECK(gov.coins() == 3);
+        CHECK(gov.get_last_action() == "tax");
+
+        game.set_turn_to(&gov2);
+
+        // Ariel מבצע tax
+        gov2.tax();
+
+        CHECK(game.is_awaiting_tax_block());
+        CHECK(game.get_tax_target() == &gov2);
+        CHECK(game.get_tax_source() == &gov);
+        CHECK_NOTHROW(dynamic_cast<Governor*>(&gov)->block_tax(gov2));
+        CHECK_FALSE(game.is_awaiting_tax_block());
+        CHECK(gov2.coins() == 0);
+        CHECK(gov2.get_last_action().empty());
+
+        SUBCASE("Tax Not Your Turn") {
+            game.set_turn_to(&gov2);
+            CHECK_THROWS_AS(gov.tax(), std::runtime_error);
+        }
+
+        gov2.deactivate();
+    }
+}
+TEST_CASE("בדיקת חסימת Tax - Successful execution") {
+    Game game;
+
+    Governor gov(game, "Gili");
+    Spy spy(game, "Shai");
+    Governor gov2(game, "Ariel");
+    Baron baron(game, "Tamar");
+
+    game.add_player(&gov);
+    game.add_player(&spy);
+    game.add_player(&gov2);
+    game.add_player(&baron);
+
+    SUBCASE("Player::tax - Successful execution") {
+        game.set_turn_to(&spy);
+        spy.add_coins(5); // Ensure less than 10 coins
+        int initial_coins = spy.coins();
+        spy.tax();
+        CHECK(spy.coins() == initial_coins + 2); // Adds 2 coins
+        CHECK(game.is_awaiting_tax_block()); // Tax block phase
+        CHECK(game.get_tax_target() == &spy); // Target is Spy
+        CHECK(game.get_tax_source() == &gov); // Source is Governor (Gili)
+        CHECK(game.turn() == "Gili"); // Gili’s turn to block
+        std::cout << "[TEST DEBUG] Before skip by Gili, turn is: " << game.turn() << "\n";
+        gov.skip_tax_block(); // Skip Gili’s block
+        std::cout << "[TEST DEBUG] After skip by Gili, turn is: " << game.turn() << "\n";
+        CHECK(game.turn() == "Ariel"); // Ariel’s turn to block
+        std::cout << "[TEST DEBUG] Before skip by Ariel, turn is: " << game.turn() << "\n";
+        gov2.skip_tax_block(); // Skip Ariel’s block
+        std::cout << "[TEST DEBUG] After skip by Ariel, turn is: " << game.turn() << "\n";
+        CHECK_FALSE(game.is_awaiting_tax_block()); // Block phase ends
+        CHECK(game.turn() == "Ariel"); // Advances to next player after Spy
     }
 }

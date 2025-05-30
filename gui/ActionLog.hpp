@@ -1,21 +1,21 @@
 /*
 Mail - ariel.yaacobi@msmail.ariel.ac.il
 */
-#pragma once
+#pragma once  // Ensure the file is included only once during compilation
 
-#include <SFML/Graphics.hpp>
-#include <deque>
-#include <string>
+#include <SFML/Graphics.hpp>  // For SFML graphics components like Font, Text, RenderWindow
+#include <deque>              // For maintaining a scrollable queue of messages
+#include <string>             // For using std::string
 
-namespace coup {
+namespace coup {  // All classes/functions are inside the 'coup' namespace
 
     class ActionLog {
     private:
-        sf::Font& font;
-        std::deque<std::string> messages;
-        std::vector<sf::Text> textEntries;
-        const size_t maxLines = 10;
-        sf::Vector2f position;
+        sf::Font& font;                       // Reference to the font used for rendering text
+        std::deque<std::string> messages;     // Stores the recent log messages
+        std::vector<sf::Text> textEntries;    // Stores visual representations of messages
+        const size_t maxLines = 10;           // Max number of messages shown in the log
+        sf::Vector2f position;                // Top-left position of the log on the screen
 
     public:
         // Constructor: Initializes the ActionLog with a font and optional position
@@ -32,4 +32,4 @@ namespace coup {
 
     };
 
-}
+}  // End of namespace coup

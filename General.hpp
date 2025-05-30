@@ -28,12 +28,6 @@ namespace coup {
         std::unordered_set<Player*> protected_players;
 
         /**
-         * @brief Initiates a protection action on a target player to prevent them from being couped.
-         * @param target The player to protect.
-         */
-        void protect_from_coup(Player& target);
-
-        /**
          * @brief Checks whether a specific player is currently protected by this General.
          * @param target The player to check.
          * @return True if the player is protected, false otherwise.

@@ -68,24 +68,37 @@ void Governor::block_tax(Player& target) {
 }
 
 /// Skips current Governor's tax block and moves to next or resumes game.
-void Governor::skip_tax_block() {
-    if (game.num_players() < 2) {
+    void Governor::skip_tax_block() {
+    if (!game.is_awaiting_tax_block()) {
         throw runtime_error("Game has not started – need at least 2 players.");
     }
 
+    std::cout << "[DEBUG] Governor " << name() << " is skipping tax block.\n";
     Player* next = game.pop_next_tax_blocker();
     if (next) {
+        std::cout << "[DEBUG] Passing tax block to next Governor: " << next->name() << "\n";
+        game.set_tax_source(next);
         game.set_turn_to(next);
     } else {
+        std::cout << "[DEBUG] No more Governors to block tax, resolving.\n";
+        Player* tax_target = game.get_tax_target();
         game.set_awaiting_tax_block(false);
-        Player* taxed = game.get_tax_target();
         game.set_tax_target(nullptr);
         game.set_tax_source(nullptr);
-        int index = game.get_last_tax_index();
-        const auto& players = game.get_all_players();
-        do { index = (index + 1) % players.size(); } while (!players[index]->is_active());
-        game.set_turn_to(players[index]);
-        game.set_turn_index(index);
+
+        // התקדם לשחקן הבא אחרי ה-target
+        if (tax_target && tax_target->is_active()) {
+            int target_index = game.get_player_index(tax_target);
+            const auto& players = game.get_all_players();
+            int next_index = target_index;
+            do {
+                next_index = (next_index + 1) % players.size();
+            } while (!players[next_index]->is_active());
+            std::cout << "[DEBUG] Advancing turn to next player after tax target: " << players[next_index]->name() << "\n";
+            game.set_turn_to(players[next_index]);
+        } else {
+            game.next_turn();
+        }
     }
 }
 

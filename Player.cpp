@@ -52,19 +52,22 @@ namespace coup {
         add_coins(2);
         last_action = "tax";
 
-        for (Player* p : game.get_all_players()) {
-            if (p->is_active() && p->role() == "Governor" && p != this) {
-                game.set_last_tax_index_if_needed(game.get_player_index(this));
-                game.init_tax_blockers(this);
-                game.set_awaiting_tax_block(true);
-                game.set_tax_target(this);
-                game.set_tax_source(p);
-                game.set_turn_to(p);
-                return;
-            }
+        game.set_last_tax_index_if_needed(game.get_player_index(this));
+        game.init_tax_blockers(this); // החזרנו את השורה הזו
+        game.set_awaiting_tax_block(true);
+        game.set_tax_target(this);
+
+        Player* nextGov = game.pop_next_tax_blocker();
+        if (nextGov) {
+            game.set_tax_source(nextGov);
+            game.set_turn_to(nextGov);
+        } else {
+            game.set_awaiting_tax_block(false);
+            game.set_tax_target(nullptr);
+            game.set_tax_source(nullptr);
+            last_arrested_target = nullptr;
+            game.next_turn();
         }
-        last_arrested_target = nullptr;
-        game.next_turn();
     }
 
     /// Performs a bribe action: pays 4 coins, may be blocked by Judges
@@ -187,14 +190,18 @@ namespace coup {
         deduct_coins(7);
         last_action = "coup";
 
-        for (Player* p : game.get_all_players()) {
-            if (p->is_active() && p->role() == "General" && p->coins() >= 5) {
-                game.set_awaiting_coup_block(true);
-                game.set_coup_attacker(this);
-                game.set_coup_target(&target);
-                game.set_turn_to(p);
-                return;
-            }
+        // === הכנה לחסימת Generals ===
+        game.set_coup_attacker(this);
+        game.set_coup_target(&target);
+        game.init_coup_blockers(this);
+        game.set_awaiting_coup_block(true); // Set block phase explicitly
+        std::cout << "[DEBUG] Coup initiated by " << name() << ", awaiting block: " << (game.is_awaiting_coup_block() ? "true" : "false") << "\n";
+
+        Player* firstGen = game.pop_next_coup_blocker();
+        if (firstGen) {
+            std::cout << "[DEBUG] Passing turn to first General: " << firstGen->name() << "\n";
+            game.set_turn_to(firstGen);
+            return;
         }
 
         last_arrested_target = nullptr;

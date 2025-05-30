@@ -170,6 +170,29 @@ namespace coup {
             }
         }
     }
+    void Game::init_coup_blockers(Player* attacker) {
+        coup_blockers_queue.clear();
+        std::cout << "[DEBUG] Initializing coup blockers queue for attacker: " << attacker->name() << "\n";
+        for (Player* p : players_list) {
+            if (p->is_active() && p->role() == "General" && p->coins() >= 5 && p != attacker) {
+                std::cout << "[DEBUG] Adding General " << p->name() << " to coup_blockers_queue.\n";
+                coup_blockers_queue.push_back(p);
+            }
+        }
+        if (coup_blockers_queue.empty()) {
+            std::cout << "[DEBUG] No Generals available to block coup.\n";
+        }
+    }
+
+
+    Player* Game::pop_next_coup_blocker() {
+        if (coup_blockers_queue.empty()) return nullptr;
+        Player* next = coup_blockers_queue.front();
+        coup_blockers_queue.pop_front();
+        return next;
+    }
+
+
 
     /// Initializes a queue of Judges who can block a bribe initiated by the given player.
     void Game::init_bribe_blockers(Player* briber) {
@@ -215,54 +238,81 @@ namespace coup {
         }
     }
 
-    /// Called if no General blocks a coup. Finalizes the coup and eliminates the target.
     void Game::skip_coup_block() {
         if (!awaiting_coup_block || !coup_attacker || !coup_target) {
             throw runtime_error("No coup block is pending.");
         }
 
-        std::cout << "General skipped coup block.\n";
+        Player* next = pop_next_coup_blocker();
+        if (next) {
+            std::cout << "[DEBUG] General skipped coup block, passing to next General: " << next->name() << "\n";
+            set_turn_to(next);
+        } else {
+            std::cout << "[DEBUG] No more Generals to block, resolving coup.\n";
+            coup_target->set_couped(true);
+            coup_target->deactivate();
+            std::cout << coup_attacker->name() << " performed coup on " << coup_target->name() << std::endl;
 
-        coup_target->set_couped(true);
-        coup_target->deactivate();
-        std::cout << coup_attacker->name() << " performed coup on " << coup_target->name() << std::endl;
+            // שמור את ה-attackerIndex לפני ניקוי coup_attacker
+            int attackerIndex = get_player_index(coup_attacker);
+            set_awaiting_coup_block(false);
+            set_coup_attacker(nullptr);
+            set_coup_target(nullptr);
 
-        set_awaiting_coup_block(false);
-        set_coup_attacker(nullptr);
-        set_coup_target(nullptr);
+            // התקדם לשחקן הבא בסדר אחרי ה-attacker
+            const auto& players = get_all_players();
+            do {
+                attackerIndex = (attackerIndex + 1) % players.size();
+            } while (!players[attackerIndex]->is_active());
 
-        int attackerIndex = get_player_index(coup_attacker);
-        do {
-            attackerIndex = (attackerIndex + 1) % num_players();
-        } while (!get_all_players()[attackerIndex]->is_active());
-
-        set_turn_to(get_all_players()[attackerIndex]);
+            std::cout << "[DEBUG] Coup resolved, advancing turn to: " << players[attackerIndex]->name() << "\n";
+            set_turn_to(players[attackerIndex]);
+        }
     }
 
     /// Allows a General to block a pending coup if valid. Returns turn to next player.
     void Game::block_coup(Player* general) {
         if (!awaiting_coup_block || !coup_attacker || !coup_target) {
-            throw std::runtime_error("No coup to block.");
+            throw runtime_error("No coup block is pending.");
         }
-        if (!general || general->role() != "General" || !general->is_active()) {
-            throw std::runtime_error("Only an active General can block a coup.");
+        if (!general->is_active()) {
+            throw runtime_error("Only an active General can block a coup.");
         }
 
-        std::cout << general->name() << " blocked the coup from " << coup_attacker->name() << std::endl;
+        if (general->role() != "General" || general->coins() < 5) {
+            throw runtime_error("Player cannot block coup.");
+        }
+
+        general->deduct_coins(5);
+        std::cout << general->name() << " blocked the coup from " << coup_attacker->name() << "\n";
+
+        // שמור את המיקום של מבצע ה-coup לפני ניקוי
+        int attackerIndex = get_player_index(coup_attacker);
+        if (attackerIndex == -1) {
+            throw runtime_error("Attacker not found in player list.");
+        }
 
         set_awaiting_coup_block(false);
         set_coup_attacker(nullptr);
         set_coup_target(nullptr);
 
-        int attackerIndex = get_player_index(coup_attacker);
+        // התקדם לשחקן הבא בסדר אחרי מבצע ה-coup
         const auto& players = get_all_players();
-
-        size_t nextIndex = (attackerIndex + 1) % players.size();
-        while (!players[nextIndex]->is_active()) {
+        int nextIndex = attackerIndex;
+        do {
             nextIndex = (nextIndex + 1) % players.size();
+        } while (!players[nextIndex]->is_active() && nextIndex != attackerIndex); // למנוע לולאה אינסופית
+        if (nextIndex == attackerIndex) {
+            throw runtime_error("No active players available after attacker.");
         }
 
+        std::cout << "[DEBUG] Coup blocked, advancing turn to: " << players[nextIndex]->name() << "\n";
         set_turn_to(players[nextIndex]);
     }
+    Player* Game::get_current_player() const {
+        if (players_list.empty()) throw runtime_error("No players in the game.");
+        return players_list[turn_index];
+    }
+
 
 } // namespace coup
